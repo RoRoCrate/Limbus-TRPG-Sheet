@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Limbus TRPG キャラクターシートメーカー</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main style="display:flex; gap:12px;">
+<section style="flex:2;">
+  <header>
+    <h1>キャラクターシート</h1>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button id="clearBtn" type="button" class="btn ghost">フォームをクリア</button>
+      <button id="saveBtn" class="btn">ローカル保存</button>
+      <button id="printBtn" class="btn">印刷 / PDF</button>
+      <button id="downloadBtn" class="btn">テキストとして保存</button>
+
+    </div>
+  </header>
+
+  <div id="pageTopBtn">▲ TOP</div>
+
+    <main class="container">
+    <section>
+      <form id="sheetForm" class="card" autocomplete="off" onsubmit="return false;">
+        <div class="row">
+          <div class="col">
+            <label>PC 名</label>
+            <input id="pcName" type="text" placeholder="PC名を入力" />
+          </div>
+          <div style="width:220px">
+            <label>PL 名</label>
+            <input id="plName" type="text" placeholder="PL名を入力" />
+          </div>
+        </div>
+
+        <hr style="margin:12px 0;border:none;border-top:1px solid rgba(255,255,255,0.04)">
+
+        <div>
+  <label>【ステータス】</label>
+  <div class="stat-grid" style="margin-top:8px">
+
+    <div class="stat">
+      <label>人格</label>
+      <input id="persona" type="text" />
+    </div>
+
+    <div class="stat">
+      <label>HP</label>
+      <input id="hp" type="number" min="0" />
+    </div>
+
+    <div class="stat">
+      <label>SAN</label>
+      <input id="san" type="number" min="0" />
+    </div>
+
+    <div class="stat">
+      <label>速度（nDn）</label>
+      <input id="speed" type="text" placeholder="例: 1d3" />
+
+    </div>
+
+    <!-- 斬撃耐性 -->
+    <div class="stat">
+      <label>斬撃</label>
+      <select id="slash">
+        <option value="耐性">耐性</option>
+        <option value="普通" selected>普通</option>
+        <option value="脆弱">脆弱</option>
+      </select>
+    </div>
+
+    <!-- 貫通耐性 -->
+    <div class="stat">
+      <label>貫通</label>
+      <select id="pierce">
+        <option value="耐性">耐性</option>
+        <option value="普通" selected>普通</option>
+        <option value="脆弱">脆弱</option>
+      </select>
+    </div>
+
+    <!-- 打撃耐性 -->
+    <div class="stat">
+      <label>打撃</label>
+      <select id="blunt">
+        <option value="耐性">耐性</option>
+        <option value="普通" selected>普通</option>
+        <option value="脆弱">脆弱</option>
+      </select>
+    </div>
+
+    <div class="stat">
+      <label>精神</label>
+      <input id="mind" type="text" />
+    </div>
+
+  </div>
+</div>
+
+
+
+        <hr style="margin:12px 0;border:none;border-top:1px solid rgba(255,255,255,0.04)">
+
+        <div>
+  <label>【パッシブ】</label>
+  <div class="stat-grid" style="margin-top:8px">
+    <div class="stat">
+      <label>パッシブ名</label>
+      <input id="passive_name" type="text" />
+    </div>
+
+    <div class="stat">
+      <label>発動条件</label>
+      <input id="passive_condition" type="text" />
+    </div>
+
+    <div class="stat" style="grid-column: span 2;">
+      <label>効果</label>
+      <textarea id="passive_effect" style="width:100%; height:60px;"></textarea>
+    </div>
+  </div>
+</div>
+<div style="margin-top:16px;">
+  <label>【サポートパッシブ】</label>
+
+  <!-- ▼ 1枠目 -->
+
+  <div class="stat-grid" style="margin-bottom:10px;">
+    <div class="stat">
+      <label>1：サポート名</label>
+      <input id="sup1_name" type="text">
+    </div>
+    <div class="stat">
+      <label>発動条件</label>
+      <input id="sup1_condition" type="text">
+    </div>
+    <div class="stat" style="grid-column: span 2;">
+      <label>効果</label>
+      <textarea id="sup1_effect" style="width:100%;height:60px;"></textarea>
+    </div>
+  </div>
+
+  <!-- ▼ 2枠目 -->
+
+  <div class="stat-grid" style="margin-bottom:10px;">
+    <div class="stat">
+      <label>2：サポート名</label>
+      <input id="sup2_name" type="text">
+    </div>
+    <div class="stat">
+      <label>発動条件</label>
+      <input id="sup2_condition" type="text">
+    </div>
+    <div class="stat" style="grid-column: span 2;">
+      <label>効果</label>
+      <textarea id="sup2_effect" style="width:100%;height:60px;"></textarea>
+    </div>
+  </div>
+
+  <!-- ▼ 3枠目：チェックで表示 -->
+
+  <label style="margin-top:8px; display:block;">
+    <input type="checkbox" id="sup3_enable"> 3枠目を使用する
+  </label>
+
+  <div id="sup3_wrapper" style="display:none; margin-top:8px;">
+    <div class="stat-grid">
+      <div class="stat">
+        <label>3：サポート名</label>
+        <input id="sup3_name" type="text">
+      </div>
+      <div class="stat">
+        <label>発動条件</label>
+        <input id="sup3_condition" type="text">
+      </div>
+      <div class="stat" style="grid-column: span 2;">
+        <label>効果</label>
+        <textarea id="sup3_effect" style="width:100%;height:60px;"></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+   <!-- 死亡後パッシブ -->
+
+<div style="margin-top:16px;">
+  <label>
+    <input type="checkbox" id="deathpassive_enable">
+    死亡後パッシブ所持
+  </label>
+
+  <div id="deathpassive_wrapper" style="display:none; margin-top:8px;">
+    <div class="stat-grid">
+      <div class="stat">
+        <label>死亡後パッシブ名</label>
+        <input id="deathp_name" type="text">
+      </div>
+      <div class="stat">
+        <label>発動条件</label>
+        <input id="deathp_condition" type="text">
+      </div>
+      <div class="stat" style="grid-column: span 2;">
+        <label>効果</label>
+        <textarea id="deathp_effect" style="width:100%; height:60px;"></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+
+        <div style="margin-top:12px">
+  <label>【戦術】（0〜4）</label>
+  <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-top:8px">
+
+    <!-- 戦術 0：守備属性  -->
+    <div class="tactic-block">
+      <label>0：</label>
+      <input id="t0_name" type="text" placeholder="戦術名" />
+
+      <!-- 守備属性 -->
+      <label style="margin-top:6px">守備属性</label>
+      <select id="t0_guard">
+        <option value="">選択</option>
+        <option value="防御">防御</option>
+        <option value="回避">回避</option>
+        <option value="反撃">反撃</option>
+      </select>
+
+      <!-- 罪 -->
+      <label style="margin-top:6px">罪</label>
+      <select id="t0_sin">
+        <option value="">選択</option>
+        <option value="憤怒">憤怒</option>
+        <option value="色欲">色欲</option>
+        <option value="怠惰">怠惰</option>
+        <option value="暴食">暴食</option>
+        <option value="憂鬱">憂鬱</option>
+        <option value="傲慢">傲慢</option>
+        <option value="嫉妬">嫉妬</option>
+      </select>
+
+      <!-- ダイス -->
+      <label style="margin-top:6px">ダイス</label>
+      <input id="t0_dice" type="text" placeholder="例：3d6+2">
+
+      <!-- 効果 -->
+      <label style="margin-top:6px">効果</label>
+      <textarea id="t0_effect" placeholder="（効果）"></textarea>
+    </div>
+
+    <!-- 戦術 1〜4：攻撃属性 -->
+    <!-- テンプレ：tX_name / tX_attr / tX_sin / tX_dice / tX_effect -->
+
+    <!-- 戦術 1 -->
+    <div class="tactic-block">
+      <label>1：</label>
+      <input id="t1_name" type="text" placeholder="戦術名" />
+
+      <label style="margin-top:6px">攻撃属性</label>
+      <select id="t1_attr">
+        <option value="">選択</option>
+        <option value="斬撃">斬撃</option>
+        <option value="貫通">貫通</option>
+        <option value="打撃">打撃</option>
+      </select>
+
+      <label style="margin-top:6px">罪</label>
+      <select id="t1_sin">
+        <option value="">選択</option>
+        <option value="憤怒">憤怒</option>
+        <option value="色欲">色欲</option>
+        <option value="怠惰">怠惰</option>
+        <option value="暴食">暴食</option>
+        <option value="憂鬱">憂鬱</option>
+        <option value="傲慢">傲慢</option>
+        <option value="嫉妬">嫉妬</option>
+      </select>
+
+      <label style="margin-top:6px">ダイス</label>
+      <input id="t1_dice" type="text" placeholder="例：4d6">
+
+      <label style="margin-top:6px">効果</label>
+      <textarea id="t1_effect" placeholder="（効果）"></textarea>
+    </div>
+
+    <!-- 戦術 2 -->
+    <div class="tactic-block">
+      <label>2：</label>
+      <input id="t2_name" type="text" placeholder="戦術名" />
+
+      <label style="margin-top:6px">攻撃属性</label>
+      <select id="t2_attr">
+        <option value="">選択</option>
+        <option value="斬撃">斬撃</option>
+        <option value="貫通">貫通</option>
+        <option value="打撃">打撃</option>
+      </select>
+
+      <label style="margin-top:6px">罪</label>
+      <select id="t2_sin">
+        <option value="">選択</option>
+        <option value="憤怒">憤怒</option>
+        <option value="色欲">色欲</option>
+        <option value="怠惰">怠惰</option>
+        <option value="暴食">暴食</option>
+        <option value="憂鬱">憂鬱</option>
+        <option value="傲慢">傲慢</option>
+        <option value="嫉妬">嫉妬</option>
+      </select>
+
+      <label style="margin-top:6px">ダイス</label>
+      <input id="t2_dice" type="text" placeholder="例：2d8">
+
+      <label style="margin-top:6px">効果</label>
+      <textarea id="t2_effect" placeholder="（効果）"></textarea>
+    </div>
+
+    <!-- 戦術 3 -->
+    <div class="tactic-block">
+      <label>3：</label>
+      <input id="t3_name" type="text" placeholder="戦術名" />
+
+      <label style="margin-top:6px">攻撃属性</label>
+      <select id="t3_attr">
+        <option value="">選択</option>
+        <option value="斬撃">斬撃</option>
+        <option value="貫通">貫通</option>
+        <option value="打撃">打撃</option>
+      </select>
+
+      <label style="margin-top:6px">罪</label>
+      <select id="t3_sin">
+        <option value="">選択</option>
+        <option value="憤怒">憤怒</option>
+        <option value="色欲">色欲</option>
+        <option value="怠惰">怠惰</option>
+        <option value="暴食">暴食</option>
+        <option value="憂鬱">憂鬱</option>
+        <option value="傲慢">傲慢</option>
+        <option value="嫉妬">嫉妬</option>
+      </select>
+
+      <label style="margin-top:6px">ダイス</label>
+      <input id="t3_dice" type="text" placeholder="例：1d12">
+
+      <label style="margin-top:6px">効果</label>
+      <textarea id="t3_effect" placeholder="（効果）"></textarea>
+    </div>
+
+    <!-- 戦術 4 -->
+    <div class="tactic-block">
+      <label>4：</label>
+      <input id="t4_name" type="text" placeholder="戦術名" />
+
+      <label style="margin-top:6px">攻撃属性</label>
+      <select id="t4_attr">
+        <option value="">選択</option>
+        <option value="斬撃">斬撃</option>
+        <option value="貫通">貫通</option>
+        <option value="打撃">打撃</option>
+      </select>
+
+      <label style="margin-top:6px">罪</label>
+      <select id="t4_sin">
+        <option value="">選択</option>
+        <option value="憤怒">憤怒</option>
+        <option value="色欲">色欲</option>
+        <option value="怠惰">怠惰</option>
+        <option value="暴食">暴食</option>
+        <option value="憂鬱">憂鬱</option>
+        <option value="傲慢">傲慢</option>
+        <option value="嫉妬">嫉妬</option>
+      </select>
+
+      <label style="margin-top:6px">ダイス</label>
+      <input id="t4_dice" type="text" placeholder="例：3d4">
+
+      <label style="margin-top:6px">効果</label>
+      <textarea id="t4_effect" placeholder="（効果）"></textarea>
+    </div>
+  </div>
+
+
+<!-- 固有項目 -->
+
+<label style="margin-top:6px">固有</label> <label> <br><input type="checkbox" id="hasUnique" style="margin-right:6px">
+固有を所有 </label>
+
+<div id="uniqueInput" style="margin-top:6px; display:none;">
+  <label>名称</label>
+  <input id="uniqueName" type="text" placeholder="名称">
+
+<label style="margin-top:6px">最大数</label> <input id="uniqueMax" type="number" placeholder="最大数">
+
+<label style="margin-top:6px">種別</label> <select id="uniqueType"> <option value="バフ">バフ</option> <option value="デバフ">デバフ</option> <option value="中立バフ">中立バフ</option> </select>
+
+<label style="margin-top:6px">効果</label>
+
+  <textarea id="uniqueEffect" placeholder="効果"></textarea>
+
+</div>
+
+
+  <!-- アイテム -->
+
+<label>アイテム / 所持品</label>
+
+  <textarea id="items"></textarea>
+
+<!-- 装備 E.G.O -->
+
+<div style="margin-top:12px;">
+  <label>【装備 E.G.O】</label>
+  <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:8px;">
+    <div>
+      <label>ZAYIN</label>
+      <input id="ego_zayin" type="text" placeholder="ZAYIN">
+    </div>
+    <div>
+      <label>TETH</label>
+      <input id="ego_teth" type="text" placeholder="TETH">
+    </div>
+    <div>
+      <label>HE</label>
+      <input id="ego_he" type="text" placeholder="HE">
+    </div>
+    <div>
+      <label>WAW</label>
+      <input id="ego_waw" type="text" placeholder="WAW">
+    </div>
+    <div>
+      <label>ALEPH</label>
+      <input id="ego_aleph" type="text" placeholder="ALEPH">
+    </div>
+  </div>
+</div>
+
+<!-- 通貨 -->
+
+<div style="margin-top:16px;">
+  <label>所持通貨</label>
+  <div class="stat-grid">
+    <div class="stat">
+      <label>LP</label>
+      <input id="cur_lp" type="number" placeholder="LP">
+    </div>
+    <div class="stat">
+      <label>自我の欠片</label>
+      <input id="cur_frag" type="number" placeholder="自我の欠片">
+    </div>
+  </div>
+</div>
+
+
+  <!-- 右：所持人格 -->
+  <div>
+    <label>【所持人格】</label>
+    <textarea id="owned_personas" placeholder="・（人格名）"></textarea>
+  </div>
+
+  <!-- 左：身体強化 -->
+  <div>
+    <label>【身体強化】</label>
+    <textarea id="body_enhance" placeholder="・(身体強化名)"></textarea>
+  </div>
+
+  <!-- 右は空のままでもOK（レイアウト維持のため） -->
+  <div></div>
+
+          <div style="margin-top:12px">
+          <label>【所持 E.G.O】</label>
+          <textarea id="owned_ego" placeholder="・（E.G.O名）（危険度ランク）"></textarea>
+        </div>
+
+        <div style="margin-top:12px">
+          <label>【所持サポートパッシブ】</label>
+          <textarea id="owned_support_passives" placeholder="・（サポートパッシブ名）"></textarea>
+        </div>
+
+        <div style="margin-top:12px">
+          <label>【所持精神】</label>
+          <textarea id="owned_spirits" placeholder="・（精神名)"></textarea>
+        </div>
+
+        <div style="margin-top:12px">
+          <label>【自由記入欄 1】</label>
+          <textarea id="free_note_1" placeholder="メモ、備考、キャラクター設定など"></textarea>
+        </div>
+
+        <div style="margin-top:12px">
+          <label>【自由記入欄 2】</label>
+          <textarea id="free_note_2" placeholder="シナリオ履歴など"></textarea>
+        </div>
+
+
+</form>
+
+</section>
+
+<aside class="preview" style="flex:1;">
+  <div class="card">
+    <div style="font-size:1.1rem;font-weight:800" id="pPcName">—</div>
+    <div style="font-size:0.85rem;color:#888" id="pPlName">—</div>
+
+<div style="margin-top:12px">
+  <div style="font-size:13px;color:#888">ステータス</div>
+  <div id="pPersona">—</div>
+  <div>HP: <span id="pHp">—</span></div>
+  <div>SAN: <span id="pSan">—</span></div>
+  <div>速度: <span id="pSpeed">—</span></div>
+  <div>斬撃: <span id="pSlash">—</span></div>
+  <div>貫通: <span id="pPierce">—</span></div>
+  <div>打撃: <span id="pBlunt">—</span></div>
+  <div>精神: <span id="pMind">—</span></div>
+</div>
+
+<div style="margin-top:12px">
+  <div style="font-size:13px;color:#888">パッシブ</div>
+  <pre id="pPassives">—</pre>
+</div>
+
+<div style="margin-top:12px">
+  <div style="font-size:13px;color:#888">サポートパッシブ</div>
+  <pre id="pSupport">—</pre>
+</div>
+
+<div style="margin-top:12px">
+  <div style="font-size:13px;color:#888">死亡後パッシブ</div>
+  <pre id="preview_deathpassive">—</pre>
+</div>
+
+<div style="margin-top:12px">
+  <div style="font-size:13px;color:#888">戦術</div>
+  <pre id="pTactics">—</pre>
+</div>
+
+<div style="margin-top:12px">
+  <div style="font-size:13px;color:#888">固有項目</div>
+  <pre id="pUniqueItems">—</pre>
+</div>
+
+<div style="margin-top:12px">
+  <div style="font-size:13px;color:#888">アイテム / 所持品</div>
+  <pre id="pItems">—</pre>
+</div>
+
+<div style="margin-top:12px">
+  <div style="font-size:13px;color:#888">装備 E.G.O</div>
+  <pre id="pEgo">—</pre>
+</div>
+
+<div style="margin-top:12px">
+  <div style="font-size:13px;color:#888">所持通貨 / その他</div>
+  <pre id="pCurrency">—</pre>
+</div>
+
+<div style="margin-top:12px">
+  <div style="font-size:13px;color:#888">所持人格</div>
+  <pre id="pPersonas">—</pre>
+</div>
+
+<div style="margin-top:12px">
+  <div style="font-size:13px;color:#888">身体強化</div>
+  <pre id="pBodyEnhance">—</pre>
+</div>
+
+<div style="margin-top:12px">
+  <div style="font-size:13px;color:#888">所持 E.G.O</div>
+  <pre id="pOwnedEgo">—</pre>
+</div>
+
+<div style="margin-top:12px">
+  <div style="font-size:13px;color:#888">自由記入欄 1</div>
+  <pre id="pFreeNote1">—</pre>
+</div>
+
+<div style="margin-top:12px">
+  <div style="font-size:13px;color:#888">自由記入欄 2</div>
+  <pre id="pFreeNote2">—</pre>
+</div>
+
+</div>
+</aside>
+</main>
+
+<script src="script.js"></script>
+</body>
+</html>
