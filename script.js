@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const dynamicIds = [];
         const maxCount = Math.min(count, 6);
         for (let i = 5; i < 5 + maxCount; i++) {
-            dynamicIds.push`t${i}_type`/ `t${i}_name`/ `t${i}_attr`/ `t${i}_sin`/ `t${i}_effect`/;
+            dynamicIds.push(`t${i}_type`, `t${i}_name`, `t${i}_attr`, `t${i}_sin`, `t${i}_effect`);
         }
         return dynamicIds;
     }
@@ -910,5 +910,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initialize();
 });
+
 
 
