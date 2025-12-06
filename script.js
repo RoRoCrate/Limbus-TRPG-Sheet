@@ -1,4 +1,10 @@
+/**
+ * Limbus TRPG キャラクターシートメーカー
+ * JavaScript ファイル
+ */
+
 document.addEventListener('DOMContentLoaded', () => {
+    // 主要な要素の取得
     const sheetForm = document.getElementById('sheetForm');
     const clearBtn = document.getElementById('clearBtn');
     const saveBtn = document.getElementById('saveBtn');
@@ -8,11 +14,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const extraTacticsEnable = document.getElementById('extraTactics_enable');
     const extraTacticsCountContainer = document.getElementById('extraTacticsCountContainer');
     const extraTacticsCount = document.getElementById('extraTacticsCount');
-    const dynamicTacticsFormsContainer = document.getElementById('dynamicTacticsFormsContainer');
+    const dynamicTacticsFormsContainer = document.getElementById('dynamicTacticsFormsContainer'); // 追加戦術のコンテナ要素を取得
 
+    // ローカルストレージキー
     const localStorageKey = 'limbusTRPGSheetData';
-    const MAX_UNIQUE_SKILLS = 10;
+    const MAX_UNIQUE_SKILLS = 10; // 固有スキルの最大数
 
+    // フォームのすべての入力要素のID (静的項目)
     const inputIds = [
         'pcName', 'plName', 'persona', 'hp', 'san', 'speed', 'slash', 'pierce', 'blunt', 'mind', 'mind_effect',
         'passive_name', 'passive_condition', 'passive_effect',
@@ -25,21 +33,33 @@ document.addEventListener('DOMContentLoaded', () => {
         't2_name', 't2_attr', 't2_sin', 't2_effect',
         't3_name', 't3_attr', 't3_sin', 't3_effect',
         't4_name', 't4_attr', 't4_sin', 't4_effect',
+        // 't5_type', 't5_name', 't5_attr', 't5_sin', 't5_effect', // 動的生成のためコメントアウト
+        // ... t6〜t10 も同様
+        // ▼ E.G.O.の詳細情報
         'ego_zayin', 'ego_zayin_condition', 'ego_zayin_effect', 'ego_zayin_awake', 'ego_zayin_corrode',
         'ego_teth', 'ego_teth_condition', 'ego_teth_effect', 'ego_teth_awake', 'ego_teth_corrode',
         'ego_he', 'ego_he_condition', 'ego_he_effect', 'ego_he_awake', 'ego_he_corrode',
         'ego_waw', 'ego_waw_condition', 'ego_waw_effect', 'ego_waw_awake', 'ego_waw_corrode',
         'ego_aleph', 'ego_aleph_condition', 'ego_aleph_effect', 'ego_aleph_awake', 'ego_aleph_corrode',
+        // ▲ E.G.O.の詳細情報
         'items', 
         'cur_lp', 'cur_frag',
         'owned_personas', 'body_enhance', 'owned_ego', 'owned_support_passives', 'owned_spirits',
         'free_note_1', 'free_note_2'
     ];
+    // 制御用ID (動的フォームの表示/非表示やカウントに使う)
     const controlIds = ['hasUnique', 'uniqueCount', 'sup3_enable', 'deathpassive_enable', 'extraTactics_enable', 
     'extraTacticsCount'];
+    // 全ての静的なIDリスト
     const allStaticIds = [...inputIds, ...controlIds];
 
+    /**
+     * 指定されたインデックスの戦術フォームのHTMLを生成する
+     * @param {number} index - 戦術番号 (5〜10)
+     * @returns {string} - 生成されたHTML文字列
+     */
     function generateExtraTacticForm(index) {
+        // 既存のtactic-blockのスタイルを踏襲
         return `
         <div class="tactic-block" data-tactic-index="${index}">
             <label>${index}：</label>
@@ -78,15 +98,20 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     }
 
+    /**
+     * 追加戦術数に基づいてフォームを再描画する
+     */
     function renderExtraTacticsForms() {
         const countInput = document.getElementById('extraTacticsCount');
         const container = document.getElementById('dynamicTacticsFormsContainer');
-        const count = parseInt(countInput?.value) || 0;
+        const count = parseInt(countInput?.value) || 0; // nullチェックを追加
 
         if (!container) return;
 
+        // コンテナをクリア
         container.innerHTML = '';
     
+        // 最大6枠までフォームを生成 (i=5からスタートし、5+countまで)
         const maxCount = Math.min(count, 6);
     
         let allFormsHtml = '';
@@ -96,14 +121,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         container.innerHTML = allFormsHtml;
       
+        // 再生成された入力欄にイベントリスナーを再登録する
+        // 既存の updatePreview をそのまま流用
         const form = document.getElementById('sheetForm');
         if (form) {
             form.querySelectorAll('.tactic-block input, .tactic-block select, .tactic-block textarea').forEach(element => {
-                element.addEventListener('input', autoSaveAndPreview);
+                element.addEventListener('input', autoSaveAndPreview); // updatePreviewを直接呼ぶのではなく、autoSave経由で呼ぶ
             });
         }
     }
 
+    // 動的に生成される固有スキル項目のIDリストを取得する関数
     function getDynamicUniqueInputIds(data) {
         const count = parseInt(data.uniqueCount) || 0;
         const dynamicIds = [];
@@ -113,6 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return dynamicIds;
     }
     
+    // 動的に生成される追加戦術項目のIDリストを取得する関数
     function getDynamicExtraTacticsIds(data) {
         const count = parseInt(data.extraTacticsCount) || 0;
         const dynamicIds = [];
@@ -124,15 +153,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
+    // フォームからデータを取得する関数
     function getFormData() {
         const data = {};
         
+        // フォーム上の現在のuniqueCount, extraTacticsCountを取得
         const uniqueCount = parseInt(document.getElementById('uniqueCount')?.value) || 0;
         const extraTacticsCount = parseInt(document.getElementById('extraTacticsCount')?.value) || 0;
         
+        // 現在のDOMに基づいて動的IDを取得
         const dynamicUniqueIds = getDynamicUniqueInputIds({ uniqueCount: uniqueCount });
         const dynamicExtraTacticsIds = getDynamicExtraTacticsIds({ extraTacticsCount: extraTacticsCount });
         
+        // 全てのIDを統合
         const allIds = [...allStaticIds, ...dynamicUniqueIds, ...dynamicExtraTacticsIds];
 
         allIds.forEach(id => {
@@ -141,6 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (element.type === 'checkbox') {
                     data[id] = element.checked;
                 } else if (element.type === 'number') {
+                    // 値が空文字列の場合、空文字列を保存するロジックを維持
                     data[id] = element.value !== '' ? parseInt(element.value) : ''; 
                 } else {
                     data[id] = element.value;
@@ -150,8 +184,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return data;
     }
 
+    // データをフォームに反映する関数
     function setFormData(data) {
-        // 1. 制御ID（チェックボックス、カウント）の値を設定
+        // 1. コントロール系要素の復元 (動的フォーム数を先にセットする必要がある)
         controlIds.forEach(id => {
             const element = document.getElementById(id);
             if (element && data[id] !== undefined) {
@@ -163,30 +198,19 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 2. 動的フォームの表示/非表示を制御
-        const hasUniqueCheckbox = document.getElementById('hasUnique');
-        const extraTacticsEnableCheckbox = document.getElementById('extraTactics_enable');
+        // 2. 動的フォームの生成 (hasUnique, extraTactics_enable の状態に応じてフォームを生成)
+        document.getElementById('hasUnique')?.dispatchEvent(new Event('change'));
         
-        if (hasUniqueCheckbox) {
-            hasUniqueCheckbox.checked = !!data.hasUnique;
-            if (document.getElementById('uniqueCountContainer')) {
-                document.getElementById('uniqueCountContainer').style.display = data.hasUnique ? 'block' : 'none';
-            }
+        // extraTactics の制御ロジックを再実行 (DOM構築後の処理として)
+        if (document.getElementById('extraTactics_enable')?.checked) {
+            document.getElementById('extraTacticsCountContainer').style.display = 'block';
+        } else {
+            document.getElementById('extraTacticsCountContainer').style.display = 'none';
         }
-        if (extraTacticsEnableCheckbox) {
-            extraTacticsEnableCheckbox.checked = !!data.extraTactics_enable;
-            if (extraTacticsCountContainer) {
-                extraTacticsCountContainer.style.display = data.extraTactics_enable ? 'block' : 'none';
-            }
-        }
+        renderExtraTacticsForms(); // 追加戦術フォームを生成
 
-        // 3. 動的フォームをデータに基づいて再生成
-        // NOTE: この時点で uniqueCount, extraTacticsCount はデータから設定済み
-        updateUniqueForms();
-        renderExtraTacticsForms();
-
-
-        // 4. 動的に生成されたIDを含めて、すべての要素に値を設定し直す
+        // 3. 全要素の値を復元
+        // データのユニーク数と追加戦術数に基づいて動的IDを取得 (データが持っている数を使用)
         const dynamicUniqueIdsOnLoad = getDynamicUniqueInputIds(data);
         const dynamicExtraTacticsIdsOnLoad = getDynamicExtraTacticsIds(data);
         const allIds = [...allStaticIds, ...dynamicUniqueIdsOnLoad, ...dynamicExtraTacticsIdsOnLoad];
@@ -202,10 +226,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 5. その他の表示制御とイベント発火
+        // 4. その他表示・非表示の切り替えを更新 (フォームが完全に復元されてから実行)
         document.getElementById('sup3_enable')?.dispatchEvent(new Event('change'));
         document.getElementById('deathpassive_enable')?.dispatchEvent(new Event('change'));
         
+        // E.G.O.の詳細表示の切り替えを再実行
         ['zayin','teth','he','waw','aleph'].forEach(id => {
             const input = document.getElementById('ego_' + id);
             const extra = document.getElementById('ego_' + id + '_extra');
@@ -215,10 +240,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // プレビュー表示を更新する関数
     function updatePreview(data) {
+        // 基本情報
         document.getElementById('pPcName').textContent = data.pcName || '—';
         document.getElementById('pPlName').textContent = data.plName ? `PL: ${data.plName}` : '—';
 
+        // ステータス関連
         document.getElementById('pPersona').textContent = data.persona || '—';
         document.getElementById('pHp').textContent = data.hp || '—';
         document.getElementById('pSan').textContent = data.san || '—';
@@ -229,11 +257,13 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('pMind').textContent = data.mind || '—';
         document.getElementById('pMindEffect').textContent = data.mind_effect || '—';
 
+        // パッシブ
         let passiveText = `【${data.passive_name || '名称不明'}】\n`;
         passiveText += `発動条件: ${data.passive_condition || '—'}\n`;
         passiveText += `効果: ${data.passive_effect || '—'}`;
         document.getElementById('pPassives').textContent = passiveText;
 
+        // サポートパッシブ
         let supportText = '';
         const supports = [
             { name: data.sup1_name, condition: data.sup1_condition, effect: data.sup1_effect, label: '1' },
@@ -254,6 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('pSupport').textContent = supportText.trim() || '—';
 
 
+        // 死亡後パッシブ
         let deathText = '—';
         if (data.deathpassive_enable) { 
             deathText = `【${data.deathp_name || '名称不明'}】\n`;
@@ -262,7 +293,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         document.getElementById('preview_deathpassive').textContent = deathText;
 
+        // 戦術 (T0〜T4 + T5〜T10)
         let tacticsText = '';
+        // T0〜T4
         for (let i = 0; i <= 4; i++) {
             const name = data[`t${i}_name`];
             const effect = data[`t${i}_effect`];
@@ -285,6 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        // T5〜T10 (動的に生成される追加戦術)
         if (data.extraTactics_enable) {
             const count = Math.min(parseInt(data.extraTacticsCount) || 0, 6);
             for (let i = 5; i < 5 + count; i++) {
@@ -305,6 +339,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         document.getElementById('pTactics').textContent = tacticsText.trim() || '—';
 
+        // 固有 (動的生成に対応したプレビュー処理)
         let uniquePreviewText = '—';
         if (data.hasUnique && data.uniqueCount > 0) {
             uniquePreviewText = '';
@@ -323,8 +358,10 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('pUniqueItems').textContent = uniquePreviewText.trim();
 
 
+        // アイテム
         document.getElementById('pItems').textContent = data.items || '—';
 
+        // 装備 E.G.O
         let egoText = '';
         const egoRanks = ['zayin', 'teth', 'he', 'waw', 'aleph'];
         
@@ -344,15 +381,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 egoText += `  覚醒スキル効果:\n${awake}\n`;
                 egoText += `  侵蝕スキル効果:\n${corrode}\n\n`; 
             } else {
-                 egoText += '\n';
+                 egoText += '\n'; // EGO名がない場合も改行を追加
             }
         });
         document.getElementById('pEgo').textContent = egoText.trim() || '—';
 
+        // 通貨
         let currencyText = `LP: ${data.cur_lp || '0'}\n`;
         currencyText += `自我の欠片: ${data.cur_frag || '0'}`;
         document.getElementById('pCurrency').textContent = currencyText;
 
+        // その他
         document.getElementById('pPersonas').textContent = data.owned_personas || '—';
         document.getElementById('pBodyEnhance').textContent = data.body_enhance || '—';
         document.getElementById('pOwnedEgo').textContent = data.owned_ego || '—';
@@ -362,12 +401,14 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('pFreeNote2').textContent = data.free_note_2 || '—';
     }
 
+    // 自動保存とプレビュー更新
     function autoSaveAndPreview() {
         const data = getFormData();
         localStorage.setItem(localStorageKey, JSON.stringify(data));
         updatePreview(data);
     }
 
+    // フォーム入力変更時のイベントリスナーを設定 (静的フォーム用)
     inputIds.forEach(id => {
         const element = document.getElementById(id);
         if (element) {
@@ -378,6 +419,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+    // 制御ID (チェックボックス) にもイベントリスナーを設定
     controlIds.filter(id => id !== 'uniqueCount' && id !== 'extraTacticsCount').forEach(id => {
         const element = document.getElementById(id);
         if (element && element.type === 'checkbox') {
@@ -385,14 +427,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    pageTopBtn?.addEventListener('click', () => {
+    // ページトップへ戻るボタン
+    pageTopBtn?.addEventListener('click', () => { // nullチェックを追加
         window.scrollTo({
             top: 0,
             behavior: 'smooth'
         });
     });
 
+    // フォームをクリアする関数
     function clearForm() {
+        // 現在のDOMに基づいて動的IDを取得し、クリア対象に含める
         const currentData = getFormData();
         const allDynamicIds = [
             ...getDynamicUniqueInputIds(currentData), 
@@ -408,6 +453,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (element.type === 'number') {
                     element.value = '';
                 } else if (element.tagName === 'SELECT') {
+                    // SELECTは初期値に戻す
                     element.value = element.querySelector('option[value=""]')?.value ?? element.options[0].value;
                 } else {
                     element.value = '';
@@ -415,6 +461,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
+        // 特定の項目をデフォルト値に設定
         const slashElement = document.getElementById('slash');
         if(slashElement) slashElement.value = '普通';
         const pierceElement = document.getElementById('pierce');
@@ -430,6 +477,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const uniqueCountElement = document.getElementById('uniqueCount');
         if(uniqueCountElement) uniqueCountElement.value = '1';
         
+        // チェックボックスの状態をリセットし、イベントを発火
         const sup3Enable = document.getElementById('sup3_enable');
         if(sup3Enable) {
             sup3Enable.checked = false;
@@ -443,22 +491,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const hasUnique = document.getElementById('hasUnique');
         if(hasUnique) {
             hasUnique.checked = false;
-            if (document.getElementById('uniqueCountContainer')) {
-                document.getElementById('uniqueCountContainer').style.display = 'none';
-            }
+            hasUnique.dispatchEvent(new Event('change'));
         }
         const extraTacticsEnable = document.getElementById('extraTactics_enable');
         if(extraTacticsEnable) {
             extraTacticsEnable.checked = false;
-            if (extraTacticsCountContainer) {
-                extraTacticsCountContainer.style.display = 'none';
-            }
+            extraTacticsEnable.dispatchEvent(new Event('change'));
         }
 
+        // extraTacticsCount をリセットし、フォームを再描画
         const extraTacticsCount = document.getElementById('extraTacticsCount');
         if(extraTacticsCount) extraTacticsCount.value = '0';
-        renderExtraTacticsForms();
-        updateUniqueForms(); // フォームをクリアした状態で再描画
+        renderExtraTacticsForms(); // フォームをクリアした状態で再描画
 
         localStorage.removeItem(localStorageKey);
         updatePreview(getFormData());
@@ -467,13 +511,16 @@ document.addEventListener('DOMContentLoaded', () => {
         alert('フォームがクリアされました。');
     }
 
+    // ローカル保存ボタン
     saveBtn?.addEventListener('click', () => {
-        autoSaveAndPreview();
+        autoSaveAndPreview(); // 最新の内容を保存
         alert('キャラクターシートの内容をブラウザに保存しました。次回アクセス時に自動で復元されます。');
     });
 
+    // クリアボタン
     clearBtn?.addEventListener('click', clearForm);
 
+    // ダウンロードボタン (テキストとして保存)
     downloadBtn?.addEventListener('click', () => {
         const data = getFormData();
         const textContent = formatDataAsText(data);
@@ -481,10 +528,12 @@ document.addEventListener('DOMContentLoaded', () => {
         downloadText(textContent, `${pcName}.txt`);
     });
 
+    // 印刷 / PDFボタン
     printBtn?.addEventListener('click', () => {
         window.print();
     });
 
+    // テキスト形式に整形する関数 (ダウンロード用)
     function formatDataAsText(data) {
         let text = `=================================================================\n`;
         text += `■ LimbusTRPG キャラクターシート\n`;
@@ -505,11 +554,13 @@ document.addEventListener('DOMContentLoaded', () => {
         text += `貫通耐性: ${data.pierce || '—'}\n`;
         text += `打撃耐性: ${data.blunt || '—'}\n\n`;
 
+        // パッシブ
         text += `【パッシブ】\n`;
         text += `名称: ${data.passive_name || '—'}\n`;
         text += `発動条件: ${data.passive_condition || '—'}\n`;
         text += `効果:${data.passive_effect || '—'}\n\n`;
 
+        // サポートパッシブ
         text += `【サポートパッシブ】\n`;
         const supports = [
             { name: data.sup1_name, condition: data.sup1_condition, effect: data.sup1_effect, label: '1' },
@@ -526,6 +577,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         text += '\n';
 
+        // 死亡後パッシブ
         if (data.deathpassive_enable) { 
             text += `【死亡後パッシブ】\n`;
             text += `名称: ${data.deathp_name || '—'}\n`;
@@ -534,8 +586,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
 
+        // 戦術 (T0〜T4 + T5〜T10)
         text += `【戦術】\n`;
         
+        // T0〜T4
         for (let i = 0; i <= 4; i++) {
             const name = data[`t${i}_name`];
             const effect = data[`t${i}_effect`];
@@ -558,6 +612,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
+        // T5〜T10 (動的に生成される追加戦術)
         if (data.extraTactics_enable) {
             const count = Math.min(parseInt(data.extraTacticsCount) || 0, 6);
             for (let i = 5; i < 5 + count; i++) {
@@ -579,6 +634,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         text += '\n';
 
+        // 固有項目
         if (data.hasUnique && data.uniqueCount > 0) {
             text += `【固有項目】\n`;
             const count = Math.min(parseInt(data.uniqueCount) || 0, MAX_UNIQUE_SKILLS);
@@ -597,6 +653,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         text += `【アイテム / 所持品】\n${data.items || '—'}\n\n`;
 
+        // 装備 E.G.O 
         text += `【装備 E.G.O】\n`;
         const egoRanks = ['zayin', 'teth', 'he', 'waw', 'aleph'];
         
@@ -636,6 +693,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return text;
     }
 
+    // テキストファイルをダウンロードする関数
     function downloadText(text, filename) {
         const blob = new Blob([text], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
@@ -649,6 +707,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
+    // ▼ 表示/非表示の切り替え
     const sup3EnableCheckbox = document.getElementById('sup3_enable');
     const sup3Wrapper = document.getElementById('sup3_wrapper');
     if (sup3EnableCheckbox) {
@@ -667,21 +726,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // E.G.O.詳細表示の切り替えイベントリスナー
     ['zayin','teth','he','waw','aleph'].forEach(id => {
         const input = document.getElementById('ego_' + id);
         const extra = document.getElementById('ego_' + id + '_extra');
         if (input && extra) {
             input.addEventListener('input', () => {
                 extra.style.display = input.value.trim() !== '' ? 'grid' : 'none';
-                autoSaveAndPreview();
+                autoSaveAndPreview(); // EGO入力時にプレビュー更新
             });
         }
     });
 
+    // ▼ スロット保存/読み込み機能
     function getSlotKey(slot) {
         return `${localStorageKey}_slot${slot}`;
     }
 
+    // スロットのラベル（PC名）を更新
     function updateSlotLabels() {
         for (let i = 1; i <= 4; i++) {
             const slotKey = getSlotKey(i);
@@ -704,6 +766,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // スロット保存
     document.querySelectorAll('.slot-save').forEach(button => {
         button.addEventListener('click', (e) => {
             const slot = e.target.dataset.slot;
@@ -715,6 +778,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // スロット読み込み
     document.querySelectorAll('.slot-load').forEach(button => {
         button.addEventListener('click', (e) => {
             const slot = e.target.dataset.slot;
@@ -736,6 +800,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // スロット削除
     document.querySelectorAll('.slot-delete').forEach(button => {
         button.addEventListener('click', (e) => {
             const slot = e.target.dataset.slot;
@@ -748,12 +813,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // --- 👇 固有スキル 動的フォーム生成ロジック 👇 ---
+    
     const hasUniqueCheckbox = document.getElementById('hasUnique');
     const countContainer = document.getElementById('uniqueCountContainer'); 
     const uniqueCountInput = document.getElementById('uniqueCount');
-    const uniqueFormsContainer = document.getElementById('uniqueFormsContainer');
+    const uniqueFormsContainer = document.getElementById('uniqueFormsContainer'); // 名前を変更
 
     
+    // 固有スキルのフォームテンプレートを作成する関数
     function createUniqueForm(index) {
         const formTitle = `固有 #${index + 1}`; 
         
@@ -782,27 +850,30 @@ document.addEventListener('DOMContentLoaded', () => {
         tempDiv.innerHTML = formHtml.trim();
         const formElement = tempDiv.firstChild;
 
+        // 【リアルタイム適応ロジック】: 動的に生成された要素に入力イベントを設定
         formElement.querySelectorAll('input, select, textarea').forEach(element => {
             if (element.type === 'checkbox') {
                 element.addEventListener('change', autoSaveAndPreview);
             } else {
-                element.addEventListener('input', autoSaveAndPreview);
+                element.addEventListener('input', autoSaveAndPreview); // ★リアルタイムプレビューを確実にする★
             }
         });
 
         return formElement;
     }
 
+    // 固有スキルフォームの数を更新するメインの関数
     function updateUniqueForms() {
-        if (!uniqueFormsContainer) return;
+        if (!uniqueFormsContainer) return; // コンテナがない場合は何もしない
         
-        if (!countContainer || document.getElementById('hasUnique')?.checked !== true) {
+        if (!countContainer || countContainer.style.display === 'none') {
             uniqueFormsContainer.innerHTML = '';
             return;
         }
         
         let count = parseInt(uniqueCountInput?.value) || 0;
 
+        // 0〜10の範囲に制限
         count = Math.max(0, count);
         count = Math.min(count, MAX_UNIQUE_SKILLS);
 
@@ -822,9 +893,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        autoSaveAndPreview();
+        // フォーム構造の変更後、必ずプレビューも更新 
+        autoSaveAndPreview(); // 【★動的フォームの数変更時にプレビューを更新★】
     }
 
+    // 1. チェックボックスの変更イベント（固有数入力欄の表示/非表示を制御）
     if (hasUniqueCheckbox) {
         hasUniqueCheckbox.addEventListener('change', function() {
             if (this.checked) {
@@ -834,37 +907,51 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (countContainer) countContainer.style.display = 'none';
                 if (uniqueFormsContainer) uniqueFormsContainer.innerHTML = '';
                 if (uniqueCountInput) uniqueCountInput.value = '1'; 
-                autoSaveAndPreview();
+                autoSaveAndPreview(); // 非表示時にもプレビューを更新（固有項目を消すため）
             }
         });
     }
 
+    // 2. 固有数入力欄の変更イベント（固有スキルフォームの数を制御）
     if (uniqueCountInput) {
         uniqueCountInput.addEventListener('input', updateUniqueForms);
     }
     
+    // --- 👆 固有スキル 動的フォーム生成ロジック 終了 👆 ---
+
+
+    // --- 👇 追加戦術 動的フォーム生成ロジック 👇 ---
+
     if (extraTacticsEnable && extraTacticsCountContainer && extraTacticsCount) {
+        // 1. 制御ロジック (チェックボックス)
         extraTacticsEnable.addEventListener('change', function() {
             extraTacticsCountContainer.style.display = this.checked ? 'block' : 'none';
             
+            // チェックを外したらカウントとフォームをリセット
             if (!this.checked) {
                 extraTacticsCount.value = 0;
+                renderExtraTacticsForms();
             }
-            renderExtraTacticsForms();
-            autoSaveAndPreview();
+            autoSaveAndPreview(); // 表示/非表示時にプレビューを更新
         });
 
+        // 2. 所持数入力欄の制御
         extraTacticsCount.addEventListener('input', function() {
+            // 最大値6、最小値0のバリデーション
             let value = parseInt(this.value);
             if (isNaN(value) || value < 0) value = 0;
             if (value > 6) value = 6;
             this.value = value;
 
-            renderExtraTacticsForms();
-            autoSaveAndPreview();
+            renderExtraTacticsForms(); // フォームを再描画・再登録
+            autoSaveAndPreview(); // カウント変更時にプレビューも更新
         });
     }
 
+    // --- 👆 追加戦術 動的フォーム生成ロジック 終了 👆 ---
+
+
+    // 初期化処理
     function initialize() {
         const savedData = localStorage.getItem(localStorageKey);
         if (savedData) {
@@ -875,18 +962,16 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (e) {
                 console.error("保存されたデータの読み込みに失敗しました:", e);
                 localStorage.removeItem(localStorageKey);
+                // データ破損時はデフォルトでプレビューを初期化
                 updatePreview(getFormData());
             }
         } else {
+            // 保存データがない場合も初期のフォーム内容でプレビューを一度更新
             updatePreview(getFormData());
         }
-        
-        // 念のため、初期ロード時にも動的フォームを確実に更新
-        updateUniqueForms();
-        renderExtraTacticsForms();
-        
         updateSlotLabels();
     }
 
     initialize();
 });
+// 以前のコード末尾にあった余分な '}' を削除し、コード全体が 'DOMContentLoaded' 内に収まるように修正しました。
