@@ -102,6 +102,128 @@ function updatePreview(){
   $('pFreeNote2').textContent = d.free_note_2 || '—';
 }
 
+// フォームの全入力値をオブジェクトとして取得する関数
+function getFormData() {
+    const form = document.getElementById('sheetForm');
+    const data = {};
+    const inputs = form.querySelectorAll('input, select, textarea');
+
+    inputs.forEach(input => {
+        const key = input.id;
+        if (key) {
+            if (input.type === 'checkbox') {
+                data[key] = input.checked;
+            } else {
+                data[key] = input.value;
+            }
+        }
+    });
+
+    return data;
+}
+
+// オブジェクトの値をフォームに設定する関数
+function setFormData(data) {
+    for (const key in data) {
+        const input = document.getElementById(key);
+        if (input) {
+            if (input.type === 'checkbox') {
+                input.checked = data[key];
+                // チェックボックスの状態変更による追加表示要素の更新（例：sup3_wrapper / deathpassive_wrapper / uniqueInput）
+                if (key === 'sup3_enable') {
+                    document.getElementById('sup3_wrapper').style.display = data[key] ? 'grid' : 'none';
+                }
+                if (key === 'deathpassive_enable') {
+                    document.getElementById('deathpassive_wrapper').style.display = data[key] ? 'grid' : 'none';
+                }
+                if (key === 'hasUnique') {
+                    document.getElementById('uniqueInput').style.display = data[key] ? 'block' : 'none';
+                }
+            } else {
+                input.value = data[key];
+            }
+        }
+    }
+    // フォームに値を設定した後、プレビューを更新する関数（※別途実装が必要）
+    updatePreview(); 
+}
+
+
+// =================================================================
+// スロット保存・読み込みの機能
+// =================================================================
+
+function saveToSlot(slotNumber) {
+    const data = getFormData();
+    const key = `limbus-sheet-slot-${slotNumber}`;
+    try {
+        localStorage.setItem(key, JSON.stringify(data));
+        alert(`スロット ${slotNumber} にキャラクターシートを保存しました！`);
+    } catch (e) {
+        alert('ローカルストレージへの保存に失敗しました。ブラウザの設定を確認してください。');
+    }
+}
+
+function loadFromSlot(slotNumber) {
+    const key = `limbus-sheet-slot-${slotNumber}`;
+    const storedData = localStorage.getItem(key);
+
+    if (storedData) {
+        try {
+            const data = JSON.parse(storedData);
+            setFormData(data);
+            alert(`スロット ${slotNumber} からキャラクターシートを読み込みました！`);
+        } catch (e) {
+            alert('保存データの形式が不正です。読み込みに失敗しました。');
+        }
+    } else {
+        alert(`スロット ${slotNumber} に保存されたデータはありません。`);
+    }
+}
+
+
+// =================================================================
+// イベントリスナーの設定
+// =================================================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    // スロット保存ボタンのイベント設定
+    document.querySelectorAll('.slot-save').forEach(button => {
+        button.addEventListener('click', () => {
+            const slot = button.getAttribute('data-slot');
+            saveToSlot(slot);
+        });
+    });
+
+    // スロット読み込みボタンのイベント設定
+    document.querySelectorAll('.slot-load').forEach(button => {
+        button.addEventListener('click', () => {
+            const slot = button.getAttribute('data-slot');
+            loadFromSlot(slot);
+        });
+    });
+
+    // 既存の「ローカル保存」ボタンは、便宜上スロット1に保存する機能として定義します
+    const originalSaveBtn = document.getElementById('saveBtn');
+    if (originalSaveBtn) {
+        originalSaveBtn.addEventListener('click', () => {
+            saveToSlot(1);
+        });
+    }
+
+    
+    // --- (例: チェックボックスによる表示切り替えの基本処理) ---
+    document.getElementById('sup3_enable').addEventListener('change', (e) => {
+        document.getElementById('sup3_wrapper').style.display = e.target.checked ? 'grid' : 'none';
+    });
+    document.getElementById('deathpassive_enable').addEventListener('change', (e) => {
+        document.getElementById('deathpassive_wrapper').style.display = e.target.checked ? 'grid' : 'none';
+    });
+    document.getElementById('hasUnique').addEventListener('change', (e) => {
+        document.getElementById('uniqueInput').style.display = e.target.checked ? 'block' : 'none';
+    });
+    // ---
+});
 
 
 
@@ -292,3 +414,4 @@ function printSheet(){
 
 $('clearBtnTop')?.addEventListener('click', clearForm);
 $('printBtn')?.addEventListener('click', printSheet);
+
