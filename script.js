@@ -181,6 +181,14 @@ function loadFromSlot(slotNumber) {
     }
 }
 
+// ★★★ スロット削除ボタンのイベント設定を追加 ★★★
+    document.querySelectorAll('.slot-delete').forEach(button => {
+        button.addEventListener('click', () => {
+            const slot = button.getAttribute('data-slot');
+            deleteFromSlot(slot);
+        });
+    });
+
 
 // =================================================================
 // イベントリスナーの設定
@@ -189,41 +197,40 @@ function loadFromSlot(slotNumber) {
 // ★★★ 1. ヘルパー関数: ラベルの更新 (最初に定義) ★★★
 // =================================================================
 const updateSlotButtonLabel = (slotNumber) => {
-    const slotLabel = document.getElementById(`slot${slotNumber}_label`);
-    const saveButton = document.querySelector(`.slot-save[data-slot="${slotNumber}"]`);
-    const loadButton = document.querySelector(`.slot-load[data-slot="${slotNumber}"]`);
-    
-    // 省略：キー定義とローカルストレージからのデータ取得...
-    const key = `limbus-sheet-slot-${slotNumber}`;
-    const storedData = localStorage.getItem(key);
+    const slotLabel = document.getElementById(`slot${slotNumber}_label`);
+    const saveButton = document.querySelector(`.slot-save[data-slot="${slotNumber}"]`);
+    const loadButton = document.querySelector(`.slot-load[data-slot="${slotNumber}"]`);
+    
+    const key = `limbus-sheet-slot-${slotNumber}`;
+    const storedData = localStorage.getItem(key);
 
-    const defaultSaveText = `S${slotNumber} 保存`;
-    const defaultLoadText = `S${slotNumber} 読込`;
+    const defaultSaveText = `S${slotNumber} 保存`;
+    const defaultLoadText = `S${slotNumber} 読込`;
 
-    // ボタンのテキストを常にデフォルトに戻す
-    if (saveButton) saveButton.textContent = defaultSaveText;
-    if (loadButton) loadButton.textContent = defaultLoadText;
-    
-    if (storedData) {
-        try {
-            const data = JSON.parse(storedData);
-            const pcName = data.pcName || '名称未設定'; 
-            
-            if (slotLabel) {
-                slotLabel.textContent = `S${slotNumber}: ${pcName}`;
-            }
-        } catch (e) {
-            if (slotLabel) {
-                slotLabel.textContent = `S${slotNumber}: (データ破損)`;
-            }
-        }
-    } else {
-        if (slotLabel) {
-            slotLabel.textContent = `スロット ${slotNumber}:`;
-        }
-    }
+    // ボタンのテキストを常にデフォルトに戻す
+    if (saveButton) saveButton.textContent = defaultSaveText;
+    if (loadButton) loadButton.textContent = defaultLoadText;
+    
+    if (storedData) {
+        try {
+            const data = JSON.parse(storedData);
+            const pcName = data.pcName || '名称未設定'; 
+            
+            if (slotLabel) {
+                slotLabel.textContent = `S${slotNumber}: ${pcName}`;
+            }
+        } catch (e) {
+            if (slotLabel) {
+                slotLabel.textContent = `S${slotNumber}: (データ破損)`;
+            }
+        }
+    } else { // <--- 正常な else ブロック (データがない場合の処理)
+        // データがない場合、デフォルトのラベルに戻す
+        if (slotLabel) {
+            slotLabel.textContent = `スロット ${slotNumber}:`; 
+        }
+    }
 };
-
 // =================================================================
 // ★★★ 2. スロット保存機能 (saveToSlot) ★★★
 // =================================================================
@@ -278,6 +285,26 @@ function loadFromSlot(slotNumber) {
 }
 
 // =================================================================
+// スロット削除の機能
+// =================================================================
+function deleteFromSlot(slotNumber) {
+    // 誤操作防止のため確認ダイアログを表示
+    if (!confirm(`スロット ${slotNumber} のデータを完全に削除しますか？\nこの操作は元に戻せません。`)) {
+        return;
+    }
+
+    const key = `limbus-sheet-slot-${slotNumber}`;
+    
+    // ローカルストレージからデータを削除
+    localStorage.removeItem(key);
+    
+    // ラベルとボタンの表示をリセット
+    updateSlotButtonLabel(slotNumber); 
+
+    alert(`スロット ${slotNumber} のデータを削除しました。`);
+}
+
+// =================================================================
 // ★★★ 4. DOMContentLoaded の統合と修正 ★★★
 // =================================================================
 window.addEventListener('DOMContentLoaded', ()=>{
@@ -313,6 +340,7 @@ window.addEventListener('DOMContentLoaded', ()=>{
     // プレビューの最終更新
     updatePreview();
 });
+
 
 
 // --- TOPボタン --- 
