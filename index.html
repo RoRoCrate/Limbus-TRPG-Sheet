@@ -82,7 +82,6 @@
 
     </div>
 
-    <!-- 斬撃耐性 -->
     <div class="stat">
       <label>斬撃</label>
       <select id="slash">
@@ -92,7 +91,6 @@
       </select>
     </div>
 
-    <!-- 貫通耐性 -->
     <div class="stat">
       <label>貫通</label>
       <select id="pierce">
@@ -102,7 +100,6 @@
       </select>
     </div>
 
-    <!-- 打撃耐性 -->
     <div class="stat">
       <label>打撃</label>
       <select id="blunt">
@@ -118,8 +115,12 @@
     </div>
 
   </div>
-</div>
-
+  
+  <div style="margin-top: 12px;">
+    <label>精神効果</label>
+    <textarea id="mind_effect" placeholder="精神効果を記入"></textarea>
+  </div>
+  </div>
 
 
         <hr style="margin:12px 0;border:none;border-top:1px solid rgba(255,255,255,0.04)">
@@ -231,45 +232,52 @@
   </div>
 </div>
 
-        <div style="margin-top:12px">
-  <label>【戦術】（0〜4）</label>
-  <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-top:8px">
+<div style="margin-top:8px"> 
+  <label>【戦術】</label>
+  <div style="display:grid;grid-template-columns:1fr;gap:8px;margin-top:8px">
+<style>
+.tactic-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px; /* 項目間のスペースを統一 */
+  margin-bottom: 8px;
+}
 
-   <div class="tactic-block">
-      <label>0：</label>
-      <input id="t0_name" type="text" placeholder="戦術名" />
+.tactic-block textarea {
+  height: 60px; /* 全戦術ブロックで統一 */
+  resize: vertical;
+}
 
-            <label style="margin-top:6px">守備属性</label>
-      <select id="t0_guard">
-        <option value="">選択</option>
-        <option value="防御">防御</option>
-        <option value="回避">回避</option>
-        <option value="反撃">反撃</option>
-      </select>
-     
-      <label style="margin-top:6px">攻撃属性</label>
-      <select id="t0_attr">
-        <option value="なし">なし</option>
-        <option value="斬撃">斬撃</option>
-        <option value="貫通">貫通</option>
-        <option value="打撃">打撃</option>
-      </select>
+.tactic-block label {
+  margin-top: 0; /* ラベル間の余白を統一 */
+}
 
-            <label style="margin-top:6px">罪</label>
-      <select id="t0_sin">
-        <option value="">選択</option>
-        <option value="憤怒">憤怒</option>
-        <option value="色欲">色欲</option>
-        <option value="怠惰">怠惰</option>
-        <option value="暴食">暴食</option>
-        <option value="憂鬱">憂鬱</option>
-        <option value="傲慢">傲慢</option>
-        <option value="嫉妬">嫉妬</option>
-      </select>
-            <label style="margin-top:6px">効果</label>
-      <textarea id="t0_effect" placeholder="（効果）"></textarea>
-    </div>
+.tactic-block select,
+.tactic-block input {
+  width: 100%;
+  box-sizing: border-box;
+}
+</style>
 
+<div class="tactic-block">
+  <label>0：</label>
+  <input id="t0_name" type="text" placeholder="戦術名" />
+
+<label>守備属性</label> <select id="t0_guard"> <option value="">選択</option> <option value="防御">防御</option> <option value="回避">回避</option> <option value="反撃">反撃</option> </select>
+
+<label>攻撃属性</label> <select id="t0_attr"> <option value="なし">なし</option> <option value="斬撃">斬撃</option> <option value="貫通">貫通</option> <option value="打撃">打撃</option> </select>
+
+<label>罪</label> <select id="t0_sin"> <option value="">選択</option> <option value="憤怒">憤怒</option> <option value="色欲">色欲</option> <option value="怠惰">怠惰</option> <option value="暴食">暴食</option> <option value="憂鬱">憂鬱</option> <option value="傲慢">傲慢</option> <option value="嫉妬">嫉妬</option> </select>
+
+<label>マッチ処理</label> <select id="t0_match"> <option value="不可">不可</option> <option value="可能">可能</option> </select>
+
+<label>効果</label>
+
+  <textarea id="t0_effect" placeholder="（効果）"></textarea>
+
+</div>
+
+</div>
     <!-- 戦術 1〜4：攻撃属性 -->
     <!-- テンプレ：tX_name / tX_attr / tX_sin / tX_dice / tX_effect -->
 
@@ -390,30 +398,43 @@
     </div>
   </div>
 
+  <div style="margin-top:16px;">
+  <label>
+    <input type="checkbox" id="extraTactics_enable">
+    追加戦術欄を使用
+  </label>
+
+    <div id="extraTacticsCountContainer" style="display:none; margin-top:6px;">
+    <label>所持追加戦術数</label>
+    <input id="extraTacticsCount" type="number" min="0" max="6" value="0" placeholder="最大6" />
+  </div>
+
+    <div id="dynamicTacticsFormsContainer" style="margin-top:8px;">
+      </div>
+</div>
+
 
 <!-- 固有項目 -->
 
-<label style="margin-top:6px">固有</label> <label> <br><input type="checkbox" id="hasUnique" style="margin-right:6px">
-固有を所有 </label>
+<label style="margin-top:6px">【固有】</label>
+<label>
+    <br>
+    <input type="checkbox" id="hasUnique" style="margin-right:6px">
+    固有を所有
+</label>
 
-<div id="uniqueInput" style="margin-top:6px; display:none;">
-  <label>名称</label>
-  <input id="uniqueName" type="text" placeholder="名称">
-
-<label style="margin-top:6px">最大数</label> <input id="uniqueMax" type="number" placeholder="最大数">
-
-<label style="margin-top:6px">種別</label> <select id="uniqueType"> <option value="バフ">バフ</option> <option value="デバフ">デバフ</option> <option value="中立バフ">中立バフ</option> </select>
-
-<label style="margin-top:6px">効果</label>
-
-  <textarea id="uniqueEffect" placeholder="効果"></textarea>
-
+<div id="uniqueCountContainer" style="margin-top:6px; display:none;">
+    <label>所持固有数</label>
+    <input id="uniqueCount" type="number" min="0" max="10"value="1" placeholder="固有スキル数">
 </div>
+
+<div id="uniqueFormsContainer">
+    </div>
 
 
   <!-- アイテム -->
 
-<label>アイテム / 所持品</label>
+<label>【アイテム / 所持品】</label>
 
   <textarea id="items"></textarea>
 
@@ -422,33 +443,75 @@
 <div style="margin-top:12px;">
   <label>【装備 E.G.O】</label>
   <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:8px;">
+    
+    <!-- ZAYIN -->
     <div>
       <label>ZAYIN</label>
       <input id="ego_zayin" type="text" placeholder="ZAYIN">
+      <div id="ego_zayin_extra" style="display:none; margin-top:4px; gap:4px;">
+        <div><label>発動条件</label><input id="ego_zayin_condition" type="text" placeholder="発動条件"></div>
+        <div><label>効果</label><textarea id="ego_zayin_effect" placeholder="効果"></textarea></div>
+        <div><label>覚醒スキル効果</label><textarea id="ego_zayin_awake" placeholder="覚醒スキル効果"></textarea></div>
+        <div><label>侵蝕スキル効果</label><textarea id="ego_zayin_corrode" placeholder="侵蝕スキル効果"></textarea></div>
+      </div>
     </div>
+
+    <!-- TETH -->
     <div>
       <label>TETH</label>
       <input id="ego_teth" type="text" placeholder="TETH">
+      <div id="ego_teth_extra" style="display:none; margin-top:4px; gap:4px;">
+        <div><label>発動条件</label><input id="ego_teth_condition" type="text" placeholder="発動条件"></div>
+        <div><label>効果</label><textarea id="ego_teth_effect" placeholder="効果"></textarea></div>
+        <div><label>覚醒スキル効果</label><textarea id="ego_teth_awake" placeholder="覚醒スキル効果"></textarea></div>
+        <div><label>侵蝕スキル効果</label><textarea id="ego_teth_corrode" placeholder="侵蝕スキル効果"></textarea></div>
+      </div>
     </div>
+
+    <!-- HE -->
     <div>
       <label>HE</label>
       <input id="ego_he" type="text" placeholder="HE">
+      <div id="ego_he_extra" style="display:none; margin-top:4px; gap:4px;">
+        <div><label>発動条件</label><input id="ego_he_condition" type="text" placeholder="発動条件"></div>
+        <div><label>効果</label><textarea id="ego_he_effect" placeholder="効果"></textarea></div>
+        <div><label>覚醒スキル効果</label><textarea id="ego_he_awake" placeholder="覚醒スキル効果"></textarea></div>
+        <div><label>侵蝕スキル効果</label><textarea id="ego_he_corrode" placeholder="侵蝕スキル効果"></textarea></div>
+      </div>
     </div>
+
+    <!-- WAW -->
     <div>
       <label>WAW</label>
       <input id="ego_waw" type="text" placeholder="WAW">
+      <div id="ego_waw_extra" style="display:none; margin-top:4px; gap:4px;">
+        <div><label>発動条件</label><input id="ego_waw_condition" type="text" placeholder="発動条件"></div>
+        <div><label>効果</label><textarea id="ego_waw_effect" placeholder="効果"></textarea></div>
+        <div><label>覚醒スキル効果</label><textarea id="ego_waw_awake" placeholder="覚醒スキル効果"></textarea></div>
+        <div><label>侵蝕スキル効果</label><textarea id="ego_waw_corrode" placeholder="侵蝕スキル効果"></textarea></div>
+      </div>
     </div>
+
+    <!-- ALEPH -->
     <div>
       <label>ALEPH</label>
       <input id="ego_aleph" type="text" placeholder="ALEPH">
+      <div id="ego_aleph_extra" style="display:none; margin-top:4px; gap:4px;">
+        <div><label>発動条件</label><input id="ego_aleph_condition" type="text" placeholder="発動条件"></div>
+        <div><label>効果</label><textarea id="ego_aleph_effect" placeholder="効果"></textarea></div>
+        <div><label>覚醒スキル効果</label><textarea id="ego_aleph_awake" placeholder="覚醒スキル効果"></textarea></div>
+        <div><label>侵蝕スキル効果</label><textarea id="ego_aleph_corrode" placeholder="侵蝕スキル効果"></textarea></div>
+      </div>
     </div>
+
   </div>
 </div>
+
 
 <!-- 通貨 -->
 
 <div style="margin-top:16px;">
-  <label>所持通貨</label>
+  <label>【所持通貨】</label>
   <div class="stat-grid">
     <div class="stat">
       <label>LP</label>
@@ -491,17 +554,27 @@
           <label>【所持精神】</label>
           <textarea id="owned_spirits" placeholder="・（精神名)"></textarea>
         </div>
+<style>
+/* 自由記入欄も高さを統一 */
+#free_note_1,
+#free_note_2 {
+  height: 120px; /* 高さを固定して見た目を揃える */
+  resize: vertical;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 4px; /* 上のラベルとの間隔を統一 */
+}
+</style>
 
-        <div style="margin-top:12px">
-          <label>【自由記入欄 1】</label>
-          <textarea id="free_note_1" placeholder="メモ、備考、キャラクター設定など"></textarea>
-        </div>
+<div style="margin-top:12px">
+  <label>【自由記入欄 1】</label>
+  <textarea id="free_note_1" placeholder="メモ、備考、キャラクター設定など"></textarea>
+</div>
 
-        <div style="margin-top:12px">
-          <label>【自由記入欄 2】</label>
-          <textarea id="free_note_2" placeholder="シナリオ履歴など"></textarea>
-        </div>
-          
+<div style="margin-top:12px">
+  <label>【自由記入欄 2】</label>
+  <textarea id="free_note_2" placeholder="シナリオ履歴など"></textarea>
+</div>
 
 </form>
 <div style="font-size: 12px; line-height: 1.5;">
@@ -520,8 +593,8 @@
     <div style="font-size:0.85rem;color:#888" id="pPlName">—</div>
 
 <div style="margin-top:12px">
-  <div style="font-size:13px;color:#888">ステータス</div>
-  <div id="pPersona">—</div>
+  <div style="font-size:13px;color:#888">【ステータス】</div>
+  <div>人格:<Span id="pPersona">—</div>
   <div>HP: <span id="pHp">—</span></div>
   <div>SAN: <span id="pSan">—</span></div>
   <div>速度: <span id="pSpeed">—</span></div>
@@ -529,70 +602,73 @@
   <div>貫通: <span id="pPierce">—</span></div>
   <div>打撃: <span id="pBlunt">—</span></div>
   <div>精神: <span id="pMind">—</span></div>
+  <div>精神効果：<span id="pMindEffect">—</span></div>
+  <div style="margin-top:12px">
+    </div>
 </div>
 
 <div style="margin-top:12px">
-  <div style="font-size:13px;color:#888">パッシブ</div>
+  <div style="font-size:13px;color:#888">【パッシブ】</div>
   <pre id="pPassives">—</pre>
 </div>
 
 <div style="margin-top:12px">
-  <div style="font-size:13px;color:#888">サポートパッシブ</div>
+  <div style="font-size:13px;color:#888">【サポートパッシブ】</div>
   <pre id="pSupport">—</pre>
 </div>
 
 <div style="margin-top:12px">
-  <div style="font-size:13px;color:#888">死亡後パッシブ</div>
-  <pre id="preview_deathpassive">—</pre>
+  <div style="font-size:13px;color:#888">【死亡後パッシブ】</div>
+  <pre id="preview_deathpassive">なし</pre>
 </div>
 
 <div style="margin-top:12px">
-  <div style="font-size:13px;color:#888">戦術</div>
+  <div style="font-size:13px;color:#888">【戦術】</div>
   <pre id="pTactics">—</pre>
 </div>
 
 <div style="margin-top:12px">
-  <div style="font-size:13px;color:#888">固有項目</div>
-  <pre id="pUniqueItems">—</pre>
+  <div style="font-size:13px;color:#888">【固有】</div>
+  <pre id="pUniqueItems">なし</pre>
 </div>
 
 <div style="margin-top:12px">
-  <div style="font-size:13px;color:#888">アイテム / 所持品</div>
+  <div style="font-size:13px;color:#888">【アイテム / 所持品】</div>
   <pre id="pItems">—</pre>
 </div>
 
 <div style="margin-top:12px">
-  <div style="font-size:13px;color:#888">装備 E.G.O</div>
-  <pre id="pEgo">—</pre>
+  <div style="font-size:13px;color:#888">【装備 E.G.O】</div>
+  <pre id="pEgo">なし</pre>
 </div>
 
 <div style="margin-top:12px">
-  <div style="font-size:13px;color:#888">所持通貨 / その他</div>
+  <div style="font-size:13px;color:#888">【所持通貨 / その他】</div>
   <pre id="pCurrency">—</pre>
 </div>
 
 <div style="margin-top:12px">
-  <div style="font-size:13px;color:#888">所持人格</div>
+  <div style="font-size:13px;color:#888">【所持人格】</div>
   <pre id="pPersonas">—</pre>
 </div>
 
 <div style="margin-top:12px">
-  <div style="font-size:13px;color:#888">身体強化</div>
+  <div style="font-size:13px;color:#888">【身体強化】</div>
   <pre id="pBodyEnhance">—</pre>
 </div>
 
 <div style="margin-top:12px">
-  <div style="font-size:13px;color:#888">所持 E.G.O</div>
+  <div style="font-size:13px;color:#888">【所持 E.G.O】</div>
   <pre id="pOwnedEgo">—</pre>
 </div>
 
 <div style="margin-top:12px">
-  <div style="font-size:13px;color:#888">自由記入欄 1</div>
+  <div style="font-size:13px;color:#888">【自由記入欄 1】</div>
   <pre id="pFreeNote1">—</pre>
 </div>
 
 <div style="margin-top:12px">
-  <div style="font-size:13px;color:#888">自由記入欄 2</div>
+  <div style="font-size:13px;color:#888">【自由記入欄 2】</div>
   <pre id="pFreeNote2">—</pre>
 </div>
 <div class="card" style="margin-top:12px; padding:12px; max-width: 1000px; margin-left: auto; margin-right: auto;">
@@ -625,25 +701,12 @@
   </div>
 </div>
 
-
-
 </div>
 </aside>
 
   </div>
 </main>
 
-
 <script src="script.js"></script>
 </body>
-
 </html>
-
-
-
-
-
-
-
-
-
