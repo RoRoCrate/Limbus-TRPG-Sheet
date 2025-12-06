@@ -235,41 +235,44 @@
   <label>【戦術】（0〜4）</label>
   <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-top:8px">
 
-    <!-- 戦術 0：守備属性  -->
-    <div class="tactic-block">
-      <label>0：</label>
-      <input id="t0_name" type="text" placeholder="戦術名" />
+   <div class="tactic-block">
+      <label>0：</label>
+      <input id="t0_name" type="text" placeholder="戦術名" />
 
-      <!-- 守備属性 -->
-      <label style="margin-top:6px">守備属性</label>
-      <select id="t0_guard">
-        <option value="">選択</option>
-        <option value="防御">防御</option>
-        <option value="回避">回避</option>
-        <option value="反撃">反撃</option>
-      </select>
+            <label style="margin-top:6px">守備属性</label>
+      <select id="t0_guard">
+        <option value="">選択</option>
+        <option value="防御">防御</option>
+        <option value="回避">回避</option>
+        <option value="反撃">反撃</option>
+      </select>
 
-      <!-- 罪 -->
-      <label style="margin-top:6px">罪</label>
-      <select id="t0_sin">
-        <option value="">選択</option>
-        <option value="憤怒">憤怒</option>
-        <option value="色欲">色欲</option>
-        <option value="怠惰">怠惰</option>
-        <option value="暴食">暴食</option>
-        <option value="憂鬱">憂鬱</option>
-        <option value="傲慢">傲慢</option>
-        <option value="嫉妬">嫉妬</option>
-      </select>
+            <label style="margin-top:6px">攻撃属性</label>
+      <select id="t0_attr">
+        <option value="なし">なし</option>
+        <option value="斬撃">斬撃</option>
+        <option value="貫通">貫通</option>
+        <option value="打撃">打撃</option>
+      </select>
 
-      <!-- ダイス -->
-      <label style="margin-top:6px">ダイス</label>
-      <input id="t0_dice" type="text" placeholder="例：3d6+2">
+            <label style="margin-top:6px">罪</label>
+      <select id="t0_sin">
+        <option value="">選択</option>
+        <option value="憤怒">憤怒</option>
+        <option value="色欲">色欲</option>
+        <option value="怠惰">怠惰</option>
+        <option value="暴食">暴食</option>
+        <option value="憂鬱">憂鬱</option>
+        <option value="傲慢">傲慢</option>
+        <option value="嫉妬">嫉妬</option>
+      </select>
 
-      <!-- 効果 -->
-      <label style="margin-top:6px">効果</label>
-      <textarea id="t0_effect" placeholder="（効果）"></textarea>
-    </div>
+            <label style="margin-top:6px">ダイス</label>
+      <input id="t0_dice" type="text" placeholder="例：3d6+2">
+
+            <label style="margin-top:6px">効果</label>
+      <textarea id="t0_effect" placeholder="（効果）"></textarea>
+    </div>
 
     <!-- 戦術 1〜4：攻撃属性 -->
     <!-- テンプレ：tX_name / tX_attr / tX_sin / tX_dice / tX_effect -->
@@ -298,9 +301,6 @@
         <option value="傲慢">傲慢</option>
         <option value="嫉妬">嫉妬</option>
       </select>
-
-      <label style="margin-top:6px">ダイス</label>
-      <input id="t1_dice" type="text" placeholder="例：4d6">
 
       <label style="margin-top:6px">効果</label>
       <textarea id="t1_effect" placeholder="（効果）"></textarea>
@@ -331,9 +331,6 @@
         <option value="嫉妬">嫉妬</option>
       </select>
 
-      <label style="margin-top:6px">ダイス</label>
-      <input id="t2_dice" type="text" placeholder="例：2d8">
-
       <label style="margin-top:6px">効果</label>
       <textarea id="t2_effect" placeholder="（効果）"></textarea>
     </div>
@@ -362,10 +359,7 @@
         <option value="傲慢">傲慢</option>
         <option value="嫉妬">嫉妬</option>
       </select>
-
-      <label style="margin-top:6px">ダイス</label>
-      <input id="t3_dice" type="text" placeholder="例：1d12">
-
+      
       <label style="margin-top:6px">効果</label>
       <textarea id="t3_effect" placeholder="（効果）"></textarea>
     </div>
@@ -394,9 +388,6 @@
         <option value="傲慢">傲慢</option>
         <option value="嫉妬">嫉妬</option>
       </select>
-
-      <label style="margin-top:6px">ダイス</label>
-      <input id="t4_dice" type="text" placeholder="例：3d4">
 
       <label style="margin-top:6px">効果</label>
       <textarea id="t4_effect" placeholder="（効果）"></textarea>
@@ -651,6 +642,7 @@
 </body>
 
 </html>
+
 
 
 
