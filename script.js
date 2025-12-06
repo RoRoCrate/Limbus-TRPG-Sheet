@@ -151,6 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function setFormData(data) {
+        // 1. 制御ID（チェックボックス、カウント）の値を設定
         controlIds.forEach(id => {
             const element = document.getElementById(id);
             if (element && data[id] !== undefined) {
@@ -162,15 +163,30 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        document.getElementById('hasUnique')?.dispatchEvent(new Event('change'));
+        // 2. 動的フォームの表示/非表示を制御
+        const hasUniqueCheckbox = document.getElementById('hasUnique');
+        const extraTacticsEnableCheckbox = document.getElementById('extraTactics_enable');
         
-        if (document.getElementById('extraTactics_enable')?.checked) {
-            document.getElementById('extraTacticsCountContainer').style.display = 'block';
-        } else {
-            document.getElementById('extraTacticsCountContainer').style.display = 'none';
+        if (hasUniqueCheckbox) {
+            hasUniqueCheckbox.checked = !!data.hasUnique;
+            if (document.getElementById('uniqueCountContainer')) {
+                document.getElementById('uniqueCountContainer').style.display = data.hasUnique ? 'block' : 'none';
+            }
         }
+        if (extraTacticsEnableCheckbox) {
+            extraTacticsEnableCheckbox.checked = !!data.extraTactics_enable;
+            if (extraTacticsCountContainer) {
+                extraTacticsCountContainer.style.display = data.extraTactics_enable ? 'block' : 'none';
+            }
+        }
+
+        // 3. 動的フォームをデータに基づいて再生成
+        // NOTE: この時点で uniqueCount, extraTacticsCount はデータから設定済み
+        updateUniqueForms();
         renderExtraTacticsForms();
 
+
+        // 4. 動的に生成されたIDを含めて、すべての要素に値を設定し直す
         const dynamicUniqueIdsOnLoad = getDynamicUniqueInputIds(data);
         const dynamicExtraTacticsIdsOnLoad = getDynamicExtraTacticsIds(data);
         const allIds = [...allStaticIds, ...dynamicUniqueIdsOnLoad, ...dynamicExtraTacticsIdsOnLoad];
@@ -186,6 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        // 5. その他の表示制御とイベント発火
         document.getElementById('sup3_enable')?.dispatchEvent(new Event('change'));
         document.getElementById('deathpassive_enable')?.dispatchEvent(new Event('change'));
         
@@ -426,17 +443,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const hasUnique = document.getElementById('hasUnique');
         if(hasUnique) {
             hasUnique.checked = false;
-            hasUnique.dispatchEvent(new Event('change'));
+            if (document.getElementById('uniqueCountContainer')) {
+                document.getElementById('uniqueCountContainer').style.display = 'none';
+            }
         }
         const extraTacticsEnable = document.getElementById('extraTactics_enable');
         if(extraTacticsEnable) {
             extraTacticsEnable.checked = false;
-            extraTacticsEnable.dispatchEvent(new Event('change'));
+            if (extraTacticsCountContainer) {
+                extraTacticsCountContainer.style.display = 'none';
+            }
         }
 
         const extraTacticsCount = document.getElementById('extraTacticsCount');
         if(extraTacticsCount) extraTacticsCount.value = '0';
         renderExtraTacticsForms();
+        updateUniqueForms(); // フォームをクリアした状態で再描画
 
         localStorage.removeItem(localStorageKey);
         updatePreview(getFormData());
@@ -774,7 +796,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateUniqueForms() {
         if (!uniqueFormsContainer) return;
         
-        if (!countContainer || countContainer.style.display === 'none') {
+        if (!countContainer || document.getElementById('hasUnique')?.checked !== true) {
             uniqueFormsContainer.innerHTML = '';
             return;
         }
@@ -827,8 +849,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (!this.checked) {
                 extraTacticsCount.value = 0;
-                renderExtraTacticsForms();
             }
+            renderExtraTacticsForms();
             autoSaveAndPreview();
         });
 
@@ -858,6 +880,11 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             updatePreview(getFormData());
         }
+        
+        // 念のため、初期ロード時にも動的フォームを確実に更新
+        updateUniqueForms();
+        renderExtraTacticsForms();
+        
         updateSlotLabels();
     }
 
