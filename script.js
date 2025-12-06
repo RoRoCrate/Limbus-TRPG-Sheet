@@ -185,46 +185,134 @@ function loadFromSlot(slotNumber) {
 // =================================================================
 // イベントリスナーの設定
 // =================================================================
+// =================================================================
+// ★★★ 1. ヘルパー関数: ラベルの更新 (最初に定義) ★★★
+// =================================================================
+const updateSlotButtonLabel = (slotNumber) => {
+    const slotLabel = document.getElementById(`slot${slotNumber}_label`);
+    const saveButton = document.querySelector(`.slot-save[data-slot="${slotNumber}"]`);
+    const loadButton = document.querySelector(`.slot-load[data-slot="${slotNumber}"]`);
+    
+    // 省略：キー定義とローカルストレージからのデータ取得...
+    const key = `limbus-sheet-slot-${slotNumber}`;
+    const storedData = localStorage.getItem(key);
 
-document.addEventListener('DOMContentLoaded', () => {
-    // スロット保存ボタンのイベント設定
+    const defaultSaveText = `S${slotNumber} 保存`;
+    const defaultLoadText = `S${slotNumber} 読込`;
+
+    // ボタンのテキストを常にデフォルトに戻す
+    if (saveButton) saveButton.textContent = defaultSaveText;
+    if (loadButton) loadButton.textContent = defaultLoadText;
+    
+    if (storedData) {
+        try {
+            const data = JSON.parse(storedData);
+            const pcName = data.pcName || '名称未設定'; 
+            
+            if (slotLabel) {
+                slotLabel.textContent = `S${slotNumber}: ${pcName}`;
+            }
+        } catch (e) {
+            if (slotLabel) {
+                slotLabel.textContent = `S${slotNumber}: (データ破損)`;
+            }
+        }
+    } else {
+        if (slotLabel) {
+            slotLabel.textContent = `スロット ${slotNumber}:`;
+        }
+    }
+};
+
+// =================================================================
+// ★★★ 2. スロット保存機能 (saveToSlot) ★★★
+// =================================================================
+
+function saveToSlot(slotNumber) {
+    const data = getFormData();
+    // 固有データも保存に追加
+    data.uniqueData = uniqueData; 
+    
+    const key = `limbus-sheet-slot-${slotNumber}`;
+    try {
+        localStorage.setItem(key, JSON.stringify(data));
+        
+        const pcName = data.pcName || '名称未設定';
+        updateSlotButtonLabel(slotNumber); // ラベルを更新
+        alert(`スロット ${slotNumber} にキャラクターシートを保存しました！ (${pcName})`);
+    } catch (e) {
+        alert('ローカルストレージへの保存に失敗しました。ブラウザの設定を確認してください。');
+    }
+}
+
+// =================================================================
+// ★★★ 3. スロット読み込み機能 (loadFromSlot) ★★★
+// =================================================================
+
+function loadFromSlot(slotNumber) {
+    const key = `limbus-sheet-slot-${slotNumber}`;
+    const storedData = localStorage.getItem(key);
+
+    if (storedData) {
+        try {
+            const data = JSON.parse(storedData);
+            
+            // 固有データを復元
+            if (data.uniqueData) {
+                uniqueData = data.uniqueData;
+            } else {
+                uniqueData = { name:'', max:1, type:'バフ', effect:'', checked:false };
+            }
+            
+            setFormData(data); // フォームにデータを書き込み
+            updateSlotButtonLabel(slotNumber); // ラベルを更新
+            
+            const pcName = data.pcName || '名称未設定';
+            alert(`スロット ${slotNumber} からキャラクターシートを読み込みました！ (${pcName})`);
+        } catch (e) {
+            alert('保存データの形式が不正です。読み込みに失敗しました。');
+        }
+    } else {
+        alert(`スロット ${slotNumber} に保存されたデータはありません。`);
+    }
+}
+
+// =================================================================
+// ★★★ 4. DOMContentLoaded の統合と修正 ★★★
+// =================================================================
+window.addEventListener('DOMContentLoaded', ()=>{
+    // 古いローカルストレージからの読み込み (最初の1回だけ)
+    const d = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
+    if(Object.keys(d).length !== 0) { // データが空でないか確認
+        setFormData(d);
+    }
+    
+    // スロットボタンのイベント設定
     document.querySelectorAll('.slot-save').forEach(button => {
         button.addEventListener('click', () => {
-            const slot = button.getAttribute('data-slot');
-            saveToSlot(slot);
+            saveToSlot(button.getAttribute('data-slot'));
         });
     });
 
-    // スロット読み込みボタンのイベント設定
     document.querySelectorAll('.slot-load').forEach(button => {
         button.addEventListener('click', () => {
-            const slot = button.getAttribute('data-slot');
-            loadFromSlot(slot);
+            loadFromSlot(button.getAttribute('data-slot'));
         });
     });
 
-    // 既存の「ローカル保存」ボタンは、便宜上スロット1に保存する機能として定義します
-    const originalSaveBtn = document.getElementById('saveBtn');
-    if (originalSaveBtn) {
-        originalSaveBtn.addEventListener('click', () => {
-            saveToSlot(1);
-        });
+    // 既存の「ローカル保存」ボタンはスロット1に保存する機能に置き換え
+    document.getElementById('saveBtn')?.addEventListener('click', () => {
+        saveToSlot(1);
+    });
+
+    // ページロード時に全スロットのラベルを更新する
+    for (let i = 1; i <= 4; i++) {
+        updateSlotButtonLabel(i);
     }
-
     
-    // --- (例: チェックボックスによる表示切り替えの基本処理) ---
-    document.getElementById('sup3_enable').addEventListener('change', (e) => {
-        document.getElementById('sup3_wrapper').style.display = e.target.checked ? 'grid' : 'none';
-    });
-    document.getElementById('deathpassive_enable').addEventListener('change', (e) => {
-        document.getElementById('deathpassive_wrapper').style.display = e.target.checked ? 'grid' : 'none';
-    });
-    document.getElementById('hasUnique').addEventListener('change', (e) => {
-        document.getElementById('uniqueInput').style.display = e.target.checked ? 'block' : 'none';
-    });
-    // ---
+    // プレビューの最終更新
+    updatePreview();
 });
-
 
 
 // --- TOPボタン --- 
@@ -414,4 +502,3 @@ function printSheet(){
 
 $('clearBtnTop')?.addEventListener('click', clearForm);
 $('printBtn')?.addEventListener('click', printSheet);
-
