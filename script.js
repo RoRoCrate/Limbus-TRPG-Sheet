@@ -631,8 +631,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
         text += `【所持通貨】\n`;
-        text += `LP: ${data.cur_lp || '0'}\n`;
-        text += `自我の欠片: ${data.cur_frag || '0'}\n\n`;
+        text += `LP: ${data.cur_lp || '30'}\n`;
+        text += `自我の欠片: ${data.cur_frag || '10'}\n\n`;
 
         text += `【所持人格】\n${data.owned_personas || '—'}\n\n`;
         text += `【身体強化】\n${data.body_enhance || '—'}\n\n`;
@@ -900,3 +900,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initialize();
 });
+
