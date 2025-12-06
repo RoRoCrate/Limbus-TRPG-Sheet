@@ -358,8 +358,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         getElementAndSetText('pEgo', egoText.trim() || '—');
 
-        let currencyText = `LP: ${data.cur_lp || '0'}\n`;
-        currencyText += `自我の欠片: ${data.cur_frag || '0'}`;
+        let currencyText = `LP: ${data.cur_lp || '30'}\n`;
+        currencyText += `自我の欠片: ${data.cur_frag || '10'}`;
         getElementAndSetText('pCurrency', currencyText);
 
         getElementAndSetText('pPersonas', data.owned_personas || '—');
@@ -900,4 +900,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initialize();
 });
+
 
