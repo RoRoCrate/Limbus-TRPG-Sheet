@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const dynamicIds = [];
         const maxCount = Math.min(count, 6);
         for (let i = 5; i < 5 + maxCount; i++) {
-            dynamicIds.push(`t${i}_type`, `t${i}_name`, `t${i}_attr`, `t${i}_sin`, `t${i}_effect`);
+            dynamicIds.push`t${i}_type`/ `t${i}_name`/ `t${i}_attr`/ `t${i}_sin`/ `t${i}_effect`/;
         }
         return dynamicIds;
     }
@@ -590,7 +590,7 @@ document.addEventListener('DOMContentLoaded', () => {
         text += '\n';
 
         if (data.hasUnique && data.uniqueCount > 0) {
-            text += `【固有項目】\n`;
+            text += `【固有】\n`;
             const count = Math.min(parseInt(data.uniqueCount) || 0, MAX_UNIQUE_SKILLS);
             for (let i = 0; i < count; i++) {
                 const name = data[`uniqueName_${i}`] || '—';
@@ -766,7 +766,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     
     function createUniqueForm(index) {
-        const formTitle = `固有スキル #${index + 1}`; 
+        const formTitle = `固有 #${index + 1}`; 
         
         const formHtml = `
             <div class="unique-skill-form" style="border: 1px solid #ccc; padding: 10px; margin-top: 10px;">
@@ -910,4 +910,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initialize();
 });
+
 
