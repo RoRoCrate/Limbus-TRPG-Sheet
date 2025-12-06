@@ -27,6 +27,7 @@
     <h1>LimbusTRPG キャラクターシート</h1>
     <div style="display:flex;gap:8px;align-items:center">
       <button id="clearBtn" type="button" class="btn ghost">フォームをクリア</button>
+      <button id="saveBtn" class="btn">ローカル保存</button>
       <button id="printBtn" class="btn">印刷 / PDF</button>
       <button id="downloadBtn" class="btn">テキストとして保存</button>
 
@@ -536,6 +537,7 @@
     <textarea id="body_enhance" placeholder="・(身体強化名)"></textarea>
   </div>
 
+  <!-- 右は空のままでもOK（レイアウト維持のため） -->
   <div></div>
 
           <div style="margin-top:12px">
@@ -661,6 +663,16 @@
 </div>
 
 <div style="margin-top:12px">
+  <div style="font-size:13px;color:#888">【所持サポートパッシブ】</div>
+  <pre id="pOwnedSupportPassives">—</pre>
+</div>
+
+<div style="margin-top:12px">
+  <div style="font-size:13px;color:#888">【所持精神】</div>
+  <pre id="pOwnedSpirits">—</pre>
+</div>
+
+<div style="margin-top:12px">
   <div style="font-size:13px;color:#888">【自由記入欄 1】</div>
   <pre id="pFreeNote1">—</pre>
 </div>
@@ -708,5 +720,3 @@
 <script src="script.js"></script>
 </body>
 </html>
-
-
