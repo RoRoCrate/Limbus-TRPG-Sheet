@@ -39,6 +39,344 @@ document.addEventListener('DOMContentLoaded', () => {
     'extraTacticsCount'];
     const allStaticIds = [...inputIds, ...controlIds];
 
+    // ====================================================================
+    // ▼ CSV検索機能の定数とロジック（ここから検索機能のコード）
+    // ====================================================================
+    const searchButton = document.getElementById('searchButton');
+    const searchModal = document.getElementById('searchModal');
+    const closeBtn = searchModal ? searchModal.querySelector('.close-btn') : null;
+    const searchInput = document.getElementById('searchInput');
+    const csvSelector = document.getElementById('csvSelector');
+    const searchResults = document.getElementById('searchResults');
+    const searchInputsContainer = document.getElementById('searchInputsContainer'); // 動的入力欄のコンテナ (index.htmlにこのIDが必要です)
+    
+    let currentSearchData = []; 
+    const dataCache = {}; 
+    
+    // 検索対象となるCSVファイルと表示名のリスト
+    const CSV_FILE_MAP = {
+        'identity': { name: '人格', filename: 'identity.csv' },
+        'singularidentity': { name: '特異人格', filename: 'singularidentity.csv' },
+        'suppassive': { name: 'サポートパッシブ', filename: 'suppassive.csv' },
+        'item': { name: 'アイテム', filename: 'item.csv' },
+        'mental': { name: '精神', filename: 'mental.csv' },
+        'status': { name: '状態異常', filename: 'status.csv' },
+        'ego': { name: 'E.G.O', filename: 'ego.csv' }, // E.G.Oを追加
+    };
+
+    // CSVヘッダー（キー）と検索フィールドのマッピング定義
+    // csvKey: 検索対象となるCSVファイルの列名
+    const SEARCH_FIELDS = {
+        'identity': [
+            { id: 'search_id_no', label: '番号', type: 'text', csvKey: '番号', placeholder: '半角数字を入力...' },
+            { id: 'search_id_name', label: '名称', type: 'text', csvKey: '名称', placeholder: '人格名...' }
+        ],
+        'singularidentity': [
+            { id: 'search_si_no', label: '番号', type: 'text', csvKey: '番号', placeholder: '半角数字を入力...' },
+            { id: 'search_si_name', label: '名称', type: 'text', csvKey: '名称', placeholder: '特異人格名...' }
+        ],
+        'suppassive': [
+            { id: 'search_sp_type', label: '通常/死亡', type: 'select', options: ['', '通常', '死亡'], csvKey: '種別' },
+            { id: 'search_sp_resource', label: '資源', type: 'text', csvKey: '資源', placeholder: '憤怒/傲慢...' },
+            { id: 'search_sp_ownership', label: '保有/共鳴', type: 'select', options: ['', '保有', '共鳴','なし'], csvKey: '保有・共鳴' },
+            { id: 'search_sp_price', label: '価格範囲', type: 'text', csvKey: '価格範囲', placeholder: '100~500...' }
+        ],
+        'mental': [
+            { id: 'search_mental_name', label: '名称', type: 'text', csvKey: '名称', placeholder: '萎縮...' },
+            { id: 'search_mental_price', label: '価格範囲', type: 'text', csvKey: '価格範囲', placeholder: '100~500...' }
+        ],
+        'item': [
+            { id: 'search_item_name', label: '名称', type: 'text', csvKey: '名称', placeholder: 'アイテム名...' },
+            { id: 'search_item_effect', label: '効果分類', type: 'select', options: ['', '特殊', '回復','強化'] },
+            { id: 'search_item_price', label: '価格範囲', type: 'text', csvKey: '価格範囲', placeholder: '100~500...' }
+        ],
+        'status': [
+            { id: 'search_status_name', label: '名称', type: 'text', csvKey: '名称', placeholder: '振動...' },
+            { id: 'search_status_type', label: '分類', type: 'select', options: ['', 'バフ', '中立', 'デバフ', '累積', '弾丸','特殊'], csvKey: '種別' }
+        ],
+        'ego': [
+            { id: 'search_ego_no', label: '番号', type: 'text', csvKey: '番号', placeholder: '半角数字を入力' },
+            { id: 'search_ego_name', label: '名称', type: 'text', csvKey: '名称', placeholder: '名称を入力' },
+            { id: 'search_ego_danger', label: '危険度', type: 'select', options: ['', 'ZAYIN', 'TETH', 'HE', 'WAW', 'ALEPH'], csvKey: '危険度' }
+        ]
+    };
+
+    /**
+     * CSVテキストをオブジェクトの配列に変換する関数
+     */
+    function csvToArrayOfObjects(csvText) {
+        const lines = csvText.trim().split('\n').filter(line => line.trim() !== '');
+        if (lines.length === 0) return [];
+        
+        const headers = lines[0].split(',').map(header => header.trim());
+        const data = [];
+
+        for (let i = 1; i < lines.length; i++) {
+            const values = lines[i].split(',');
+            const item = {};
+
+            for (let j = 0; j < headers.length && j < values.length; j++) {
+                item[headers[j]] = values[j].trim();
+            }
+            data.push(item);
+        }
+        return data;
+    }
+
+    /**
+     * 選択されたCSVファイルをロードし、キャッシュに保存する関数
+     */
+    async function loadCsvData(key) {
+        if (dataCache[key]) {
+            console.log(`データ '${key}' はキャッシュからロードされました。`);
+            return dataCache[key];
+        }
+
+        const file = CSV_FILE_MAP[key];
+        if (!file) {
+            console.error(`キー '${key}' に対応するファイルが見つかりません。`);
+            return [];
+        }
+
+        try {
+            const response = await fetch(file.filename);
+            if (!response.ok) {
+                console.warn(`${file.filename} のロードに失敗しました (Status: ${response.status})。空のデータを使用します。`);
+                return [];
+            }
+            
+            const csvText = await response.text();
+            const parsedData = csvToArrayOfObjects(csvText);
+            
+            dataCache[key] = parsedData;
+            console.log(`${file.filename} をロードし、キャッシュしました。`);
+            return parsedData;
+
+        } catch (error) {
+            console.error(`CSVデータのロード中にエラーが発生しました: ${file.filename}`, error);
+            return [];
+        }
+    }
+    
+    /**
+     * 選択されたCSVデータタイプに基づいて、検索フォームの入力項目を動的に生成する
+     */
+    function renderSearchInputs(selectedKey) {
+        if (!searchInputsContainer) return;
+
+        searchInputsContainer.innerHTML = '';
+        const fields = SEARCH_FIELDS[selectedKey];
+        if (!fields) return;
+
+        let html = '';
+        fields.forEach(field => {
+            html += `<div class="search-input-group">`;
+            html += `<label for="${field.id}">${field.label}</label>`;
+            if (field.type === 'select') {
+                html += `<select id="${field.id}" data-csv-key="${field.csvKey}">`;
+                field.options.forEach(option => {
+                    html += `<option value="${option}">${option === '' ? 'すべて' : option}</option>`;
+                });
+                html += `</select>`;
+            } else {
+                html += `<input id="${field.id}" type="${field.type}" placeholder="${field.placeholder || field.label + '...'}" data-csv-key="${field.csvKey}">`;
+            }
+            html += `</div>`;
+        });
+        
+        searchInputsContainer.innerHTML = html;
+        
+        // 新しい入力要素にイベントリスナーを追加して、変更があったら検索を実行
+        searchInputsContainer.querySelectorAll('input, select').forEach(element => {
+            // キーワード入力欄と連動させる
+            element.addEventListener('input', () => performSearch(searchInput.value));
+            element.addEventListener('change', () => performSearch(searchInput.value));
+        });
+    }
+
+    /**
+     * 検索結果を指定の形式で表示する関数
+     */
+    function renderResults(filteredResults, selectedKey) {
+        const resultsContainer = document.getElementById('searchResults');
+        if (!resultsContainer) return;
+        
+        if (filteredResults.length === 0) {
+            resultsContainer.innerHTML = `<p style="color:var(--muted)">一致する結果は見つかりませんでした。</p>`;
+            return;
+        }
+
+        let resultsHtml = '';
+        
+        // 各データタイプに応じた表示形式を定義
+        const DISPLAY_FORMATS = {
+            'identity': (item) => `
+                <p><strong>番号:</strong> ${item['番号'] || '—'} / <strong>名称:</strong> ${item['名称'] || '—'}</p>
+                <p class="result-effect">${item['効果'] || '（効果なし）'}</p>
+            `,
+            'singularidentity': (item) => `
+                <p><strong>番号:</strong> ${item['番号'] || '—'} / <strong>名称:</strong> ${item['名称'] || '—'}</p>
+                <p class="result-effect">${item['効果'] || '（効果なし）'}</p>
+            `,
+            'suppassive': (item) => `
+                <p><strong>名称:</strong> ${item['名称'] || '—'} / <strong>種別:</strong> ${item['種別'] || '—'}</p>
+                <p><strong>資源:</strong> ${item['資源'] || '—'} / <strong>保有/共鳴:</strong> ${item['保有・共鳴'] || '—'} / <strong>価格範囲:</strong> ${item['価格範囲'] || '—'}</p>
+                <p class="result-effect">${item['効果'] || '（効果なし）'}</p>
+            `,
+            'mental': (item) => `
+                <p><strong>名称:</strong> ${item['名称'] || '—'} / <strong>価格範囲:</strong> ${item['価格範囲'] || '—'}</p>
+                <p class="result-effect">${item['効果'] || '（効果なし）'}</p>
+            `,
+            'item': (item) => `
+                <p><strong>名称:</strong> ${item['名称'] || '—'} / <strong>効果分類:</strong> ${item['効果分類'] || '—'} / <strong>価格範囲:</strong> ${item['価格範囲'] || '—'}</p>
+                <p class="result-effect">${item['効果'] || '（効果なし）'}</p>
+            `,
+            'status': (item) => {
+                const type = item['種別'] || '—';
+                return `
+                    <p><strong>名称:</strong> ${item['名称'] || '—'}</p>
+                    <p><strong>分類:</strong> ${type}</p>
+                    <p class="result-effect">${item['効果'] || '（効果なし）'}</p>
+                `;
+            },
+            'ego': (item) => `
+                <p><strong>番号:</strong> ${item['番号'] || '—'} / <strong>名称:</strong> ${item['名称'] || '—'} / <strong>危険度:</strong> ${item['危険度'] || '—'}</p>
+                <p class="result-effect">${item['覚醒スキル効果'] || '（効果なし）'}</p>
+            `,
+            'default': (item) => {
+                // キーが未定義の場合のフォールバック
+                const name = item.名称 || item.Name || '名称不明';
+                const type = item.種別 || item.Type || '種別不明';
+                const effect = item.効果 || item.Effect || '効果なし';
+                return `
+                    <h4>${name} <span style="font-size:0.8em;color:#9aa6b2;">（${type}）</span></h4>
+                    <p class="result-effect">${effect}</p>
+                `;
+            }
+        };
+
+        const formatResult = DISPLAY_FORMATS[selectedKey] || DISPLAY_FORMATS['default'];
+
+        filteredResults.forEach(item => {
+            resultsHtml += `
+                <div class="search-result-item">
+                    ${formatResult(item)}
+                </div>
+            `;
+        });
+
+        resultsContainer.innerHTML = resultsHtml;
+    }
+
+    /**
+     * 検索を実行し結果を表示する関数 (複合検索対応)
+     */
+    function performSearch(query) {
+        const resultsContainer = document.getElementById('searchResults');
+        if (!resultsContainer || !searchInputsContainer) return;
+
+        resultsContainer.innerHTML = ''; 
+        const lowerCaseQuery = query.toLowerCase();
+        const selectedKey = csvSelector.value;
+        const fields = SEARCH_FIELDS[selectedKey] || [];
+        
+        // 1. 動的な入力値を取得
+        const dynamicFilters = {};
+        let isAnyDynamicFilterSet = false;
+        
+        fields.forEach(field => {
+            const element = document.getElementById(field.id);
+            if (element) {
+                const value = element.value.trim();
+                if (value !== '' && value !== 'すべて') {
+                    // selectの場合は完全一致、textの場合は部分一致を想定
+                    dynamicFilters[field.csvKey] = {
+                        value: value.toLowerCase(),
+                        isSelect: field.type === 'select'
+                    };
+                    isAnyDynamicFilterSet = true;
+                }
+            }
+        });
+
+        if (query.trim() === '' && !isAnyDynamicFilterSet) {
+             resultsContainer.innerHTML = '<p style="color:var(--muted)">キーワードまたはフィルタを入力して検索してください。</p>';
+             return;
+        }
+
+        const filteredResults = currentSearchData.filter(item => {
+            const keys = Object.keys(item);
+            let keywordMatch = true;
+            let dynamicFilterMatch = true;
+
+            // キーワード検索 (キーワードが入力されている場合のみ実行)
+            if (query.trim() !== '') {
+                keywordMatch = keys.some(key => {
+                    const value = item[key];
+                    return value && String(value).toLocaleLowerCase().includes(lowerCaseQuery);
+                });
+            }
+
+            // 動的フィルタの適用
+            for (const csvKey in dynamicFilters) {
+                const filter = dynamicFilters[csvKey];
+                const itemValue = String(item[csvKey] || '').toLowerCase();
+                
+                if (filter.isSelect) {
+                    // Selectボックスのフィルタ（完全一致）
+                    if (itemValue !== filter.value) {
+                        dynamicFilterMatch = false;
+                        break; 
+                    }
+                } else {
+                    // テキスト入力のフィルタ（部分一致）
+                    if (!itemValue.includes(filter.value)) {
+                        dynamicFilterMatch = false;
+                        break;
+                    }
+                }
+            }
+
+            return keywordMatch && dynamicFilterMatch;
+        });
+
+        renderResults(filteredResults, selectedKey);
+    }
+
+    /**
+     * CSV選択肢を生成し、初期データをロードする
+     */
+    async function initializeCsvSelector() {
+        // セレクトボックスのオプションを生成
+        for (const key in CSV_FILE_MAP) {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = CSV_FILE_MAP[key].name;
+            csvSelector.appendChild(option);
+        }
+
+        // 初期選択データをロード 
+        const initialKey = csvSelector.value;
+        currentSearchData = await loadCsvData(initialKey);
+        renderSearchInputs(initialKey); // 初期入力フォームを生成
+        
+        // CSV選択が変更されたときの処理
+        csvSelector.addEventListener('change', async (e) => {
+            searchInput.value = ''; 
+            searchResults.innerHTML = '<p style="color:var(--muted)">対象のデータセットがロードされました。キーワードを入力してください。</p>';
+            
+            const selectedKey = e.target.value;
+            currentSearchData = await loadCsvData(selectedKey);
+            renderSearchInputs(selectedKey); // 変更後の入力フォームを生成
+            performSearch(''); // フォーム切り替え時にも検索を実行
+        });
+    }
+
+    // ====================================================================
+    // ▲ CSV検索機能の定数とロジック（ここまで検索機能のコード）
+    // ====================================================================
+    
+
     function generateExtraTacticForm(index) {
         return `
         <div class="tactic-block" data-tactic-index="${index}">
@@ -358,8 +696,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         getElementAndSetText('pEgo', egoText.trim() || '—');
 
-        let currencyText = `LP: ${data.cur_lp || '30'}\n`;
-        currencyText += `自我の欠片: ${data.cur_frag || '10'}`;
+        let currencyText = `LP: ${data.cur_lp || '0'}\n`;
+        currencyText += `自我の欠片: ${data.cur_frag || '0'}`;
         getElementAndSetText('pCurrency', currencyText);
 
         getElementAndSetText('pPersonas', data.owned_personas || '—');
@@ -631,8 +969,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
         text += `【所持通貨】\n`;
-        text += `LP: ${data.cur_lp || '30'}\n`;
-        text += `自我の欠片: ${data.cur_frag || '10'}\n\n`;
+        text += `LP: ${data.cur_lp || '0'}\n`;
+        text += `自我の欠片: ${data.cur_frag || '0'}\n\n`;
 
         text += `【所持人格】\n${data.owned_personas || '—'}\n\n`;
         text += `【身体強化】\n${data.body_enhance || '—'}\n\n`;
@@ -875,6 +1213,40 @@ document.addEventListener('DOMContentLoaded', () => {
             autoSaveAndPreview();
         });
     }
+    
+    // ====================================================================
+    // ▼ 検索機能のイベントリスナー（ここから検索機能のコード）
+    // ====================================================================
+    if (searchButton && searchModal) {
+        searchButton.addEventListener('click', () => {
+            searchModal.style.display = 'flex';
+            searchInput.focus();
+            
+            // モーダルを開くときに、現在の選択で検索を一度実行
+            performSearch(searchInput.value || ''); 
+        });
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                searchModal.style.display = 'none';
+            });
+        }
+
+        searchModal.addEventListener('click', (e) => {
+            if (e.target === searchModal) {
+                searchModal.style.display = 'none';
+            }
+        });
+        
+        // キーワード入力で検索をトリガー
+        searchInput?.addEventListener('input', (e) => {
+            performSearch(e.target.value);
+        });
+    }
+    // ====================================================================
+    // ▲ 検索機能のイベントリスナー（ここまで検索機能のコード）
+    // ====================================================================
+
 
     function initialize() {
         const savedData = localStorage.getItem(localStorageKey);
@@ -898,7 +1270,9 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSlotLabels();
     }
 
-    initialize();
+    // 既存の initialize() の代わりに、CSVデータロード後の初期化を確実にする
+    // initializeCsvSelector() の結果を待ってからシートを初期化
+    initializeCsvSelector().then(() => {
+        initialize();
+    });
 });
-
-
