@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         'mental': { 
             name: '精神', 
-            url: '（https://docs.google.com/spreadsheets/d/e/2PACX-1vTq-eD845A-_cecFEMhZmiFEMzQ2P6iokgZs-A2rAMPM8NjcFlwE56H5kEMIGYXW30NlCeVathdxYWE/pub?output=tsv）' 
+            url: '（https://docs.google.com/spreadsheets/d/e/2PACX-1vTq-eD845A-_cecFEMhZmiFEMzQ2P6iokgZs-A2rAMPM8NjcFlwE56H5kEMIGYXW30NlCeVathdxYWE/pub?gid=0&single=true&output=tsv）' 
         },
         'ego': { 
             name: 'E.G.O', 
@@ -1328,5 +1328,6 @@ document.addEventListener('DOMContentLoaded', () => {
         initialize();
     });
 });
+
 
 
