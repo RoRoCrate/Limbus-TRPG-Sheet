@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'singularidentity': { name: '特異人格', filename: 'singularidentity.csv' },
         'suppassive': { name: 'サポートパッシブ', filename: 'suppassive.csv' },
         'item': { name: 'アイテム', filename: 'item.csv' },
-        'mental': { name: '精神', filename: 'mental.csv' },
+        'mental': { name: '精神 (SAN/EGO)', filename: 'mental.csv' },
         'status': { name: '状態異常', filename: 'status.csv' },
         'ego': { name: 'E.G.O', filename: 'ego.csv' }, // E.G.Oを追加
     };
@@ -196,6 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * 検索結果を指定の形式で表示する関数
+     * 修正点: 全ての項目を「ヘッダー: 内容」形式で改行して表示する
      */
     function renderResults(filteredResults, selectedKey) {
         const resultsContainer = document.getElementById('searchResults');
@@ -208,65 +209,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let resultsHtml = '';
         
-        // 各データタイプに応じた表示形式を定義
-        const DISPLAY_FORMATS = {
-            'identity': (item) => `
-                <p><strong>番号:</strong> ${item['番号'] || '—'} / <strong>名称:</strong> ${item['名称'] || '—'}</p>
-                <p class="result-effect">${item['効果'] || '（効果なし）'}</p>
-            `,
-            'singularidentity': (item) => `
-                <p><strong>番号:</strong> ${item['番号'] || '—'} / <strong>名称:</strong> ${item['名称'] || '—'}</p>
-                <p class="result-effect">${item['効果'] || '（効果なし）'}</p>
-            `,
-            'suppassive': (item) => `
-                <p><strong>名称:</strong> ${item['名称'] || '—'} / <strong>種別:</strong> ${item['種別'] || '—'}</p>
-                <p><strong>資源:</strong> ${item['資源'] || '—'} / <strong>保有/共鳴:</strong> ${item['保有・共鳴'] || '—'} / <strong>価格範囲:</strong> ${item['価格範囲'] || '—'}</p>
-                <p class="result-effect">${item['効果'] || '（効果なし）'}</p>
-            `,
-            'mental': (item) => `
-                <p><strong>名称:</strong> ${item['名称'] || '—'} / <strong>価格範囲:</strong> ${item['価格範囲'] || '—'}</p>
-                <p class="result-effect">${item['効果'] || '（効果なし）'}</p>
-            `,
-            'item': (item) => `
-                <p><strong>名称:</strong> ${item['名称'] || '—'} / <strong>効果分類:</strong> ${item['効果分類'] || '—'} / <strong>価格範囲:</strong> ${item['価格範囲'] || '—'}</p>
-                <p class="result-effect">${item['効果'] || '（効果なし）'}</p>
-            `,
-            'status': (item) => {
-                const type = item['種別'] || '—';
-                return `
-                    <p><strong>名称:</strong> ${item['名称'] || '—'}</p>
-                    <p><strong>分類:</strong> ${type}</p>
-                    <p class="result-effect">${item['効果'] || '（効果なし）'}</p>
-                `;
-            },
-            'ego': (item) => `
-                <p><strong>番号:</strong> ${item['番号'] || '—'} / <strong>名称:</strong> ${item['名称'] || '—'} / <strong>危険度:</strong> ${item['危険度'] || '—'}</p>
-                <p class="result-effect">${item['覚醒スキル効果'] || '（効果なし）'}</p>
-            `,
-            'default': (item) => {
-                // キーが未定義の場合のフォールバック
-                const name = item.名称 || item.Name || '名称不明';
-                const type = item.種別 || item.Type || '種別不明';
-                const effect = item.効果 || item.Effect || '効果なし';
-                return `
-                    <h4>${name} <span style="font-size:0.8em;color:#9aa6b2;">（${type}）</span></h4>
-                    <p class="result-effect">${effect}</p>
-                `;
-            }
-        };
-
-        const formatResult = DISPLAY_FORMATS[selectedKey] || DISPLAY_FORMATS['default'];
-
         filteredResults.forEach(item => {
+            let itemDetailsHtml = '';
+            
+            // itemオブジェクトのキーを反復処理し、「ヘッダー：該当行内容」の形式で改行して表示
+            for (const header in item) {
+                // 値が空でない場合のみ表示することで、冗長な情報を避ける
+                const content = item[header] ? item[header].trim() : '';
+                
+                if (content !== '') {
+                    // <p>タグを使って改行し、太字でヘッダーを強調
+                    itemDetailsHtml += `<p style="margin: 2px 0; font-size: 14px;"><strong>${header}</strong>: ${content}</p>`;
+                }
+            }
+            
+            // 項目が一つもなかった場合（CSVが空のセルのみだった場合など）のフォールバック
+            if (itemDetailsHtml === '') {
+                 // キーのみが存在する場合、少なくとも何らかのデータがあったことを示す
+                 const hasKeys = Object.keys(item).length > 0;
+                 itemDetailsHtml = `<p style="margin: 2px 0; font-size: 14px;"><strong>データ</strong>: ${hasKeys ? 'すべての列が空です' : '—'}</p>`;
+            }
+
+
             resultsHtml += `
                 <div class="search-result-item">
-                    ${formatResult(item)}
+                    ${itemDetailsHtml}
                 </div>
             `;
         });
 
         resultsContainer.innerHTML = resultsHtml;
     }
+
 
     /**
      * 検索を実行し結果を表示する関数 (複合検索対応)
