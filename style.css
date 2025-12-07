@@ -260,15 +260,17 @@ button, input, textarea, select { display: none; }
     border-bottom: 1px solid var(--glass);
 }
 
-/* 個別入力グループ */
+/* .search-input-group の修正 */
 .search-input-group {
+    /* 画面幅に合わせて均等に幅を分割 (例: 10pxの隙間を考慮した2列) */
+    min-width: calc(50% - 5px); 
+    max-width: calc(50% - 5px);
+    
+    /* 内部のレイアウトをFlexboxで縦方向に設定 */
     display: flex;
-    flex-direction: column;
-    min-width: 120px;
-    flex: 1;
-    min-width: calc(33% - 7px); /* 基本3列レイアウト */
+    flex-direction: column; /* 要素を縦に並べる */
+    margin-bottom: 5px; /* 要素間の下部のマージン */
 }
-
 .search-input-group label {
     font-size: 12px;
     color: var(--muted);
@@ -391,4 +393,18 @@ button, input, textarea, select { display: none; }
 
 #searchResultWrapper::-webkit-scrollbar-track {
     background: #0b1220;
+}
+
+#searchInputsContainer {
+    display: flex; /* Flexboxを有効にする */
+    flex-wrap: wrap; /* 画面幅が狭くなったら折り返す */
+    gap: 10px; /* 項目間の隙間 */
+    margin-bottom: 15px;
+}
+
+#searchInputsContainer input[type="text"],
+#searchInputsContainer input[type="number"],
+#searchInputsContainer select {
+    width: 100%; /* 親要素 (search-input-group) の幅いっぱいに広げる */
+    box-sizing: border-box; /* paddingやborderを幅に含める */
 }
