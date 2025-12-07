@@ -372,3 +372,23 @@ button, input, textarea, select { display: none; }
     cursor: pointer;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
+
+/* style.css の末尾などに追加 */
+#searchResultWrapper {
+    /* スクロールバーの色を調整 (Webkit系ブラウザ) */
+    scrollbar-color: #5560aa #0b1220;
+    scrollbar-width: thin;
+}
+
+#searchResultWrapper::-webkit-scrollbar {
+    width: 8px;
+}
+
+#searchResultWrapper::-webkit-scrollbar-thumb {
+    background-color: #5560aa;
+    border-radius: 10px;
+}
+
+#searchResultWrapper::-webkit-scrollbar-track {
+    background: #0b1220;
+}
