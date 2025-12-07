@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ],
         'suppassive': [
             { id: 'search_sp_type', label: '通常/死亡', type: 'select', options: ['', '通常', '死亡'], csvKey: '種別' },
-            { id: 'search_sp_resource', label: '資源', type: 'text', csvKey: '資源', placeholder: '憤怒/傲慢...' },
+            { id: 'search_sp_resource', label: '資源', type: 'select', options: ['', '憤怒', '色欲','怠惰','暴食','憂鬱','傲慢','嫉妬','なし'], csvKey:'資源' },
             { id: 'search_sp_ownership', label: '保有/共鳴', type: 'select', options: ['', '保有', '共鳴','なし'], csvKey: '保有・共鳴' },
             { id: 'search_sp_price', label: '価格範囲', type: 'text', csvKey: '価格', placeholder: '0~...' }
         ],
@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ],
         'item': [
             { id: 'search_item_name', label: '名称', type: 'text', csvKey: '名称', placeholder: 'アイテム名...' },
-            { id: 'search_item_effect', label: '効果分類', type: 'select', options: ['', '特殊', '回復','強化'] },
+            { id: 'search_item_effect', label: '分類', type: 'select', options: ['', '特殊', '回復','強化'], csvKey: '分類' },
             { id: 'search_item_price', label: '価格範囲', type: 'text', csvKey: '価格', placeholder: '0～...' }
         ],
         'status': [
