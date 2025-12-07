@@ -48,21 +48,41 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('searchInput');
     const csvSelector = document.getElementById('csvSelector');
     const searchResults = document.getElementById('searchResults');
-    const searchInputsContainer = document.getElementById('searchInputsContainer'); // 動的入力欄のコンテナ (index.htmlにこのIDが必要です)
+    const searchInputsContainer = document.getElementById('searchInputsContainer'); 
     
     let currentSearchData = []; 
     const dataCache = {}; 
     
     // 検索対象となるCSVファイルと表示名のリスト
-    // ★ 修正: ファイル名を .tsv に変更 (実際のファイル名と合わせる)
     const CSV_FILE_MAP = {
-        'identity': { name: '人格', filename: 'identity.tsv' },
-        'singularidentity': { name: '特異人格', filename: 'singularidentity.tsv' },
-        'suppassive': { name: 'サポートパッシブ', filename: 'suppassive.tsv' },
-        'item': { name: 'アイテム', filename: 'item.tsv' },
-        'mental': { name: '精神 (SAN/EGO)', filename: 'mental.tsv' },
-        'status': { name: '状態異常', filename: 'status.tsv' },
-        'ego': { name: 'E.G.O', filename: 'ego.tsv' }, // E.G.Oを追加
+        'identity': { 
+            name: '人格', 
+            url: '（ここに Identity シートのTSV公開URLを貼り付け）' 
+        },
+        'singularidentity': { 
+            name: '特異人格', 
+            url: '（ここに SingularIdentity シートのTSV公開URLを貼り付け）' 
+        },
+        'suppassive': { 
+            name: 'サポートパッシブ', 
+            url: '（ここに Suppassive シートのTSV公開URLを貼り付け）' 
+        },
+        'mental': { 
+            name: '精神', 
+            url: '（https://docs.google.com/spreadsheets/d/1N5WzWNf4UbBxeAwC_TjJuNrGFN2l4n9Qjweb-9VTLTU/edit?usp=sharing）' 
+        },
+        'ego': { 
+            name: 'E.G.O', 
+            url: '（ここに EGO シートのTSV公開URLを貼り付け）' 
+        },
+        'status': { 
+            name: '状態異常', 
+            url: '（ここに Status シートのTSV公開URLを貼り付け）' 
+        },
+        'item': { 
+            name: 'アイテム', 
+            url: '（ここに Item シートのTSV公開URLを貼り付け）' 
+        } 
     };
 
     // CSVヘッダー（キー）と検索フィールドのマッピング定義
@@ -80,16 +100,16 @@ document.addEventListener('DOMContentLoaded', () => {
             { id: 'search_sp_type', label: '通常/死亡', type: 'select', options: ['', '通常', '死亡'], csvKey: '種別' },
             { id: 'search_sp_resource', label: '資源', type: 'text', csvKey: '資源', placeholder: '憤怒/傲慢...' },
             { id: 'search_sp_ownership', label: '保有/共鳴', type: 'select', options: ['', '保有', '共鳴','なし'], csvKey: '保有・共鳴' },
-            { id: 'search_sp_price', label: '価格範囲', type: 'text', csvKey: '価格範囲', placeholder: '100~500...' }
+            { id: 'search_sp_price', label: '価格範囲', type: 'text', csvKey: '価格', placeholder: '0~...' }
         ],
         'mental': [
             { id: 'search_mental_name', label: '名称', type: 'text', csvKey: '名称', placeholder: '萎縮...' },
-            { id: 'search_mental_price', label: '価格範囲', type: 'text', csvKey: '価格範囲', placeholder: '100~500...' }
+            { id: 'search_mental_price', label: '価格範囲', type: 'text', csvKey: '価格', placeholder: '0～...' }
         ],
         'item': [
             { id: 'search_item_name', label: '名称', type: 'text', csvKey: '名称', placeholder: 'アイテム名...' },
             { id: 'search_item_effect', label: '効果分類', type: 'select', options: ['', '特殊', '回復','強化'] },
-            { id: 'search_item_price', label: '価格範囲', type: 'text', csvKey: '価格範囲', placeholder: '100~500...' }
+            { id: 'search_item_price', label: '価格範囲', type: 'text', csvKey: '価格', placeholder: '0～...' }
         ],
         'status': [
             { id: 'search_status_name', label: '名称', type: 'text', csvKey: '名称', placeholder: '振動...' },
@@ -103,24 +123,50 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     /**
-     * CSVテキストをオブジェクトの配列に変換する関数
-     * ★ 修正: デリミタをタブ文字 ('\t') に変更し、TSVとして解析する
+     * TSVのテキストをオブジェクトの配列に変換する関数
      */
     function csvToArrayOfObjects(tsvText) {
-        const lines = tsvText.trim().split('\n').filter(line => line.trim() !== '');
+        // 物理的な改行で一旦行を分割する (ここが項目内改行の制限となる)
+        const lines = tsvText.trim().split(/\r?\n/).filter(line => line.trim() !== '');
         if (lines.length === 0) return [];
         
-        // ★ 修正箇所: split(',') を split('\t') に変更
-        const headers = lines[0].split('\t').map(header => header.trim());
+        const delimiter = '\t';
+        
+        // 正規表現: タブで分割するが、ダブルクォーテーションで囲まれた内部のタブは無視する
+        const fieldSplitRegex = new RegExp(`${delimiter}(?=(?:[^"]*"[^"]*")*[^"]*$)`);
+
+        // ヘッダー行をパース
+        const headers = lines[0].split(fieldSplitRegex).map(header => {
+            let cleanHeader = header.trim();
+            if (cleanHeader.startsWith('"') && cleanHeader.endsWith('"')) {
+                cleanHeader = cleanHeader.slice(1, -1).replace(/""/g, '"');
+            }
+            return cleanHeader;
+        });
+
         const data = [];
 
         for (let i = 1; i < lines.length; i++) {
-            // ★ 修正箇所: split(',') を split('\t') に変更
-            const values = lines[i].split('\t');
+            // データ行をパース
+            const rawValues = lines[i].split(fieldSplitRegex);
+            
+            const values = rawValues.map(value => {
+                // 引用符の削除とエスケープ解除
+                let cleanValue = value.trim();
+                if (cleanValue.startsWith('"') && cleanValue.endsWith('"')) {
+                    cleanValue = cleanValue.slice(1, -1).replace(/""/g, '"');
+                }
+                
+                // [BR] (カスタム改行)、\n (エスケープ改行)、全角改行文字などを \n に置換する
+                return cleanValue
+                    .replace(/\<BR\>/g, '\n')
+                    .replace(/\\n/g, '\n')
+                    .replace(/全角改行文字/g, '\n');
+            });
+            
             const item = {};
-
             for (let j = 0; j < headers.length && j < values.length; j++) {
-                item[headers[j]] = values[j].trim();
+                item[headers[j]] = values[j];
             }
             data.push(item);
         }
@@ -129,6 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * 選択されたCSVファイルをロードし、キャッシュに保存する関数
+     * ★ 修正: URLが設定されている場合のみロードを試行し、ローカルファイルへのフォールバックを削除
      */
     async function loadCsvData(key) {
         if (dataCache[key]) {
@@ -143,9 +190,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const response = await fetch(file.filename);
+            // ★ 修正箇所： file.url のみを使用し、ローカルファイルへのフォールバックを削除
+            const dataPath = file.url;
+            
+            // URLが設定されていない、または有効なHTTP/HTTPS URLでない場合はエラーとして処理
+            if (!dataPath || !dataPath.startsWith('http')) {
+                console.warn(`キー '${key}' に対応する有効なURLが見つかりません。`);
+                return [];
+            }
+            
+            // Googleの公開URLはキャッシュされがちなので、末尾にランダムなクエリを付与してキャッシュを防ぐ
+            const fetchPath = `${dataPath}?t=${new Date().getTime()}`; 
+
+            const response = await fetch(fetchPath);
             if (!response.ok) {
-                console.warn(`${file.filename} のロードに失敗しました (Status: ${response.status})。空のデータを使用します。`);
+                console.warn(`${dataPath} のロードに失敗しました (Status: ${response.status})。空のデータを使用します。`);
                 return [];
             }
             
@@ -154,11 +213,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const parsedData = csvToArrayOfObjects(csvText);
             
             dataCache[key] = parsedData;
-            console.log(`${file.filename} をロードし、キャッシュしました。`);
+            console.log(`${dataPath} をロードし、キャッシュしました。`);
             return parsedData;
 
         } catch (error) {
-            console.error(`CSVデータのロード中にエラーが発生しました: ${file.filename}`, error);
+            // エラーメッセージからローカルファイル名を参照する箇所を削除
+            console.error(`データロード中にエラーが発生しました: ${file.name}`, error); 
             return [];
         }
     }
@@ -201,7 +261,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * 検索結果を指定の形式で表示する関数
-     * 修正点: 全ての項目を「ヘッダー: 内容」形式で改行して表示する
      */
     function renderResults(filteredResults, selectedKey) {
         const resultsContainer = document.getElementById('searchResults');
@@ -535,6 +594,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const getElementAndSetText = (id, text) => {
             const element = document.getElementById(id);
             if (element) {
+                // ここで \n を <br> に変換する処理は不要（CSSのwhite-space: pre-wrap;が適用されているため）
+                // ただし、textContentにセットする前に、もしテキストエリアの内容でなければ、
+                // 強制的に改行を反映させるために、[BR]変換後の \n を使用する。
+                // テキストエリア（効果など）はすでに\nに変換されているため、そのままtextContentへ。
+                element.textContent = text; 
+            }
+        };
+        
+        // プレビュー表示のために、データを取得し、\nを<br>に変換してからtextContentへセットする
+        const getElementAndSetTextWithBR = (id, text) => {
+            const element = document.getElementById(id);
+            if (element) {
+                // textContent を使うことで、\n はそのまま改行として扱われる（CSS white-space: pre-wrap; のおかげ）
+                // HTML要素のtextContentにセットするので、[BR]置換後の\nがそのまま反映される
                 element.textContent = text;
             }
         };
@@ -555,7 +628,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let passiveText = `【${data.passive_name || '名称不明'}】\n`;
         passiveText += `発動条件: ${data.passive_condition || '—'}\n`;
         passiveText += `効果: ${data.passive_effect || '—'}`;
-        getElementAndSetText('pPassives', passiveText);
+        getElementAndSetTextWithBR('pPassives', passiveText);
 
         let supportText = '';
         const supports = [
@@ -574,7 +647,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 supportText += `効果: ${sup.effect || '—'}\n\n`;
             }
         });
-        getElementAndSetText('pSupport', supportText.trim() || '—');
+        getElementAndSetTextWithBR('pSupport', supportText.trim() || '—');
 
 
         let deathText = '—';
@@ -583,7 +656,7 @@ document.addEventListener('DOMContentLoaded', () => {
             deathText += `発動条件: ${data.deathp_condition || '—'}\n`;
             deathText += `効果: ${data.deathp_effect || '—'}`;
         }
-        getElementAndSetText('preview_deathpassive', deathText);
+        getElementAndSetTextWithBR('preview_deathpassive', deathText);
 
         let tacticsText = '';
         for (let i = 0; i <= 4; i++) {
@@ -629,7 +702,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        getElementAndSetText('pTactics', tacticsText.trim() || '—');
+        getElementAndSetTextWithBR('pTactics', tacticsText.trim() || '—');
 
         let uniquePreviewText = '—';
         if (data.hasUnique && data.uniqueCount > 0) {
@@ -646,7 +719,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 uniquePreviewText += `効果:\n${effect}\n\n`;
             }
         }
-        getElementAndSetText('pUniqueItems', uniquePreviewText.trim());
+        getElementAndSetTextWithBR('pUniqueItems', uniquePreviewText.trim());
 
 
         getElementAndSetText('pItems', data.items || '—');
@@ -673,7 +746,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  egoText += '\n';
             }
         });
-        getElementAndSetText('pEgo', egoText.trim() || '—');
+        getElementAndSetTextWithBR('pEgo', egoText.trim() || '—');
 
         let currencyText = `LP: ${data.cur_lp || '0'}\n`;
         currencyText += `自我の欠片: ${data.cur_frag || '0'}`;
@@ -684,8 +757,8 @@ document.addEventListener('DOMContentLoaded', () => {
         getElementAndSetText('pOwnedEgo', data.owned_ego || '—');
         getElementAndSetText('pOwnedSupportPassives', data.owned_support_passives || '—');
         getElementAndSetText('pOwnedSpirits', data.owned_spirits || '—');
-        getElementAndSetText('pFreeNote1', data.free_note_1 || '—');
-        getElementAndSetText('pFreeNote2', data.free_note_2 || '—');
+        getElementAndSetTextWithBR('pFreeNote1', data.free_note_1 || '—');
+        getElementAndSetTextWithBR('pFreeNote2', data.free_note_2 || '—');
     }
 
     function autoSaveAndPreview() {
