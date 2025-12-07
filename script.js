@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ],
         'status': [
             { id: 'search_status_name', label: '名称', type: 'text', csvKey: '名称', placeholder: '振動...' },
-            { id: 'search_status_type', label: '分類', type: 'select', options: ['', 'バフ', '中立', 'デバフ', '累積', '弾丸','特殊'], csvKey: '種別' }
+            { id: 'search_status_type', label: '分類', type: 'select', options: ['', 'バフ', 'デバフ', '中立バフ', '蓄積要素', '弾丸', '特殊'], csvKey: '分類' }
         ],
         'ego': [
             { id: 'search_ego_no', label: '番号', type: 'text', csvKey: '番号', placeholder: '半角数字を入力' },
@@ -1279,3 +1279,4 @@ document.addEventListener('DOMContentLoaded', () => {
     initialize();
 
 });
+
