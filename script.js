@@ -57,31 +57,31 @@ document.addEventListener('DOMContentLoaded', () => {
     const CSV_FILE_MAP = {
         'identity': { 
             name: '人格', 
-            url: '（ここに Identity シートのTSV公開URLを貼り付け）' 
+            url: './identity.tsv' // ★ 変更: ローカルファイルパス
         },
         'singularidentity': { 
             name: '特異人格', 
-            url: '（ここに SingularIdentity シートのTSV公開URLを貼り付け）' 
+            url: './singularidentity.tsv' // ★ 変更: ローカルファイルパス
         },
         'suppassive': { 
             name: 'サポートパッシブ', 
-            url: '（ここに Suppassive シートのTSV公開URLを貼り付け）' 
+            url: './suppassive.tsv' // ★ 変更: ローカルファイルパス
         },
         'mental': { 
             name: '精神', 
-            url: '（https://docs.google.com/spreadsheets/d/e/2PACX-1vTq-eD845A-_cecFEMhZmiFEMzQ2P6iokgZs-A2rAMPM8NjcFlwE56H5kEMIGYXW30NlCeVathdxYWE/pub?gid=0&single=true&output=tsv）' 
+            url: './mental.tsv' // ★ 変更: ローカルファイルパス
         },
         'ego': { 
             name: 'E.G.O', 
-            url: '（ここに EGO シートのTSV公開URLを貼り付け）' 
+            url: './ego.tsv' // ★ 変更: ローカルファイルパス
         },
         'status': { 
             name: '状態異常', 
-            url: '（ここに Status シートのTSV公開URLを貼り付け）' 
+            url: './status.tsv' // ★ 変更: ローカルファイルパス
         },
         'item': { 
             name: 'アイテム', 
-            url: '（ここに Item シートのTSV公開URLを貼り付け）' 
+            url: './item.tsv' // ★ 変更: ローカルファイルパス
         } 
     };
 
@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * 選択されたCSVファイルをロードし、キャッシュに保存する関数
-     * ★ 修正: URLが設定されている場合のみロードを試行し、ローカルファイルへのフォールバックを削除
+     * ★ 修正: 相対パスでの読み込みを許可し、URLの場合はキャッシュ防止クエリを付与する
      */
     async function loadCsvData(key) {
         if (dataCache[key]) {
@@ -190,21 +190,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            // ★ 修正箇所： file.url のみを使用し、ローカルファイルへのフォールバックを削除
+            // file.url の値（相対パスまたはURL）をそのままデータパスとして使用
             const dataPath = file.url;
             
-            // URLが設定されていない、または有効なHTTP/HTTPS URLでない場合はエラーとして処理
-            if (!dataPath || !dataPath.startsWith('http')) {
-                console.warn(`キー '${key}' に対応する有効なURLが見つかりません。`);
+            if (!dataPath) {
+                console.warn(`キー '${key}' に対応する有効なパスが見つかりません。`);
                 return [];
             }
             
-            // Googleの公開URLはキャッシュされがちなので、末尾にランダムなクエリを付与してキャッシュを防ぐ
-            const fetchPath = `${dataPath}?t=${new Date().getTime()}`; 
+            // URLの場合はキャッシュ防止クエリを付与、それ以外（相対パスなど）はそのまま
+            const isExternalUrl = dataPath.startsWith('http://') || dataPath.startsWith('https://');
+            const fetchPath = isExternalUrl ? 
+                `${dataPath}?t=${new Date().getTime()}` : 
+                dataPath; 
 
             const response = await fetch(fetchPath);
             if (!response.ok) {
-                console.warn(`${dataPath} のロードに失敗しました (Status: ${response.status})。空のデータを使用します。`);
+                // ファイル名とパス情報を含めてより詳細に警告
+                console.warn(`${file.name} のロードに失敗しました (Path: ${fetchPath}, Status: ${response.status})。空のデータを使用します。`);
                 return [];
             }
             
@@ -213,12 +216,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const parsedData = csvToArrayOfObjects(csvText);
             
             dataCache[key] = parsedData;
-            console.log(`${dataPath} をロードし、キャッシュしました。`);
+            console.log(`${file.name} をロードし、キャッシュしました。`);
             return parsedData;
 
         } catch (error) {
-            // エラーメッセージからローカルファイル名を参照する箇所を削除
-            console.error(`データロード中にエラーが発生しました: ${file.name}`, error); 
+            // エラーメッセージをより明確に
+            console.error(`データロード中にエラーが発生しました: ${file.name} (Path: ${file.url})`, error); 
             return [];
         }
     }
@@ -596,13 +599,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (element) {
                 // ここで \n を <br> に変換する処理は不要（CSSのwhite-space: pre-wrap;が適用されているため）
                 // ただし、textContentにセットする前に、もしテキストエリアの内容でなければ、
-                // 強制的に改行を反映させるために、[BR]変換後の \n を使用する。
-                // テキストエリア（効果など）はすでに\nに変換されているため、そのままtextContentへ。
-                element.textContent = text; 
+                // 強制的に改行を反映させるために、[...
+                element.textContent = text;
             }
         };
-        
-        // プレビュー表示のために、データを取得し、\nを<br>に変換してからtextContentへセットする
+
         const getElementAndSetTextWithBR = (id, text) => {
             const element = document.getElementById(id);
             if (element) {
@@ -614,7 +615,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         getElementAndSetText('pPcName', data.pcName || '—');
         getElementAndSetText('pPlName', data.plName ? `PL: ${data.plName}` : '—');
-
         getElementAndSetText('pPersona', data.persona || '—');
         getElementAndSetText('pHp', data.hp || '—');
         getElementAndSetText('pSan', data.san || '—');
@@ -630,13 +630,14 @@ document.addEventListener('DOMContentLoaded', () => {
         passiveText += `効果: ${data.passive_effect || '—'}`;
         getElementAndSetTextWithBR('pPassives', passiveText);
 
+
         let supportText = '';
         const supports = [
             { name: data.sup1_name, condition: data.sup1_condition, effect: data.sup1_effect, label: '1' },
             { name: data.sup2_name, condition: data.sup2_condition, effect: data.sup2_effect, label: '2' }
         ];
 
-        if (data.sup3_enable) { 
+        if (data.sup3_enable) {
             supports.push({ name: data.sup3_name, condition: data.sup3_condition, effect: data.sup3_effect, label: '3' });
         }
 
@@ -649,14 +650,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         getElementAndSetTextWithBR('pSupport', supportText.trim() || '—');
 
-
         let deathText = '—';
-        if (data.deathpassive_enable) { 
+        if (data.deathpassive_enable) {
             deathText = `【${data.deathp_name || '名称不明'}】\n`;
             deathText += `発動条件: ${data.deathp_condition || '—'}\n`;
             deathText += `効果: ${data.deathp_effect || '—'}`;
         }
-        getElementAndSetTextWithBR('preview_deathpassive', deathText);
+        getElementAndSetTextWithBR('pDeathPassive', deathText);
 
         let tacticsText = '';
         for (let i = 0; i <= 4; i++) {
@@ -664,297 +664,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const effect = data[`t${i}_effect`];
             const sin = data[`t${i}_sin`];
             const attr = data[`t${i}_attr`];
-
+            
             if (name || effect) {
-                let line = `戦術${i}：${name || '名称不明'}\n`;
-                
+                let line = `【戦術${i}】 ${name || '名称不明'}\n`;
                 if (i === 0) {
                     const guard = data.t0_guard;
                     const matchStatus = data.t0_match || '可能';
-                    // 戦術0はそのまま
-                    line += `属性: 守備: ${guard || '—'} / 攻撃: ${attr || '—'} / 罪: ${sin || '—'}/ マッチ: ${matchStatus}\n`;
+                    line += `守備: ${guard || '—'} / 攻撃: ${attr || '—'} / 罪: ${sin || '—'} / マッチ処理: ${matchStatus}\n`;
                 } else {
-                    // 戦術1〜4をスラッシュ区切りに修正
-                    line += `属性: 攻撃: ${attr || '—'} / 罪: ${sin || '—'}\n`;
+                    line += `攻撃: ${attr || '—'} / 罪: ${sin || '—'}\n`;
                 }
-
                 line += `効果: ${effect || '—'}\n\n`;
                 tacticsText += line;
-            }
-        }
-
-        if (data.extraTactics_enable) {
-            const count = Math.min(parseInt(data.extraTacticsCount) || 0, 6);
-            for (let i = 5; i < 5 + count; i++) {
-                const type = data[`t${i}_type`];
-                const name = data[`t${i}_name`];
-                const effect = data[`t${i}_effect`];
-                const sin = data[`t${i}_sin`];
-                const attr = data[`t${i}_attr`];
-
-                if (name || effect) {
-                    let line = `戦術${i}：【${type || '—'}】${name || '名称不明'}\n`;
-                    // 追加戦術をスラッシュ区切りに修正
-                    line += `属性: 攻撃: ${attr || '—'} / 罪: ${sin || '—'}\n`;
-                    line += `効果: ${effect || '—'}\n\n`;
-                    tacticsText += line;
-                }
-            }
-        }
-        
-        getElementAndSetTextWithBR('pTactics', tacticsText.trim() || '—');
-
-        let uniquePreviewText = '—';
-        if (data.hasUnique && data.uniqueCount > 0) {
-            uniquePreviewText = '';
-            const count = Math.min(parseInt(data.uniqueCount) || 0, MAX_UNIQUE_SKILLS);
-            for (let i = 0; i < count; i++) {
-                const name = data[`uniqueName_${i}`] || '名称不明';
-                const max = data[`uniqueMax_${i}`] || '—';
-                const type = data[`uniqueType_${i}`] || '—';
-                const effect = data[`uniqueEffect_${i}`] || '—';
-                
-                uniquePreviewText += `【固有 #${i+1}: ${name}】\n`;
-                uniquePreviewText += `最大数: ${max}, 種別: ${type}\n`;
-                uniquePreviewText += `効果:\n${effect}\n\n`;
-            }
-        }
-        getElementAndSetTextWithBR('pUniqueItems', uniquePreviewText.trim());
-
-
-        getElementAndSetText('pItems', data.items || '—');
-
-        let egoText = '';
-        const egoRanks = ['zayin', 'teth', 'he', 'waw', 'aleph'];
-        
-        egoRanks.forEach(rank => {
-            const name = data[`ego_${rank}`] || '—';
-            
-            egoText += `${rank.toUpperCase()}: ${name}\n`;
-
-            if (name !== '—' && name.trim() !== '') {
-                const condition = data[`ego_${rank}_condition`] || '—';
-                const effect = data[`ego_${rank}_effect`] || '—';
-                const awake = data[`ego_${rank}_awake`] || '—';
-                const corrode = data[`ego_${rank}_corrode`] || '—';
-                
-                egoText += `  発動条件: ${condition}\n`;
-                egoText += `  効果:\n${effect}\n`;
-                egoText += `  覚醒スキル効果:\n${awake}\n`;
-                egoText += `  侵蝕スキル効果:\n${corrode}\n\n`; 
-            } else {
-                 egoText += '\n';
-            }
-        });
-        getElementAndSetTextWithBR('pEgo', egoText.trim() || '—');
-
-        let currencyText = `LP: ${data.cur_lp || '0'}\n`;
-        currencyText += `自我の欠片: ${data.cur_frag || '0'}`;
-        getElementAndSetText('pCurrency', currencyText);
-
-        getElementAndSetText('pPersonas', data.owned_personas || '—');
-        getElementAndSetText('pBodyEnhance', data.body_enhance || '—');
-        getElementAndSetText('pOwnedEgo', data.owned_ego || '—');
-        getElementAndSetText('pOwnedSupportPassives', data.owned_support_passives || '—');
-        getElementAndSetText('pOwnedSpirits', data.owned_spirits || '—');
-        getElementAndSetTextWithBR('pFreeNote1', data.free_note_1 || '—');
-        getElementAndSetTextWithBR('pFreeNote2', data.free_note_2 || '—');
-    }
-
-    function autoSaveAndPreview() {
-        const data = getFormData();
-        localStorage.setItem(localStorageKey, JSON.stringify(data));
-        updatePreview(data);
-    }
-
-    inputIds.forEach(id => {
-        const element = document.getElementById(id);
-        if (element) {
-            if (element.type === 'checkbox') {
-                element.addEventListener('change', autoSaveAndPreview);
-            } else {
-                element.addEventListener('input', autoSaveAndPreview);
-            }
-        }
-    });
-    controlIds.filter(id => id !== 'uniqueCount' && id !== 'extraTacticsCount').forEach(id => {
-        const element = document.getElementById(id);
-        if (element && element.type === 'checkbox') {
-            element.addEventListener('change', autoSaveAndPreview);
-        }
-    });
-
-    pageTopBtn?.addEventListener('click', () => {
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-        });
-    });
-
-    function clearForm() {
-        const currentData = getFormData();
-        const allDynamicIds = [
-            ...getDynamicUniqueInputIds(currentData), 
-            ...getDynamicExtraTacticsIds(currentData)
-        ];
-        const allIds = [...allStaticIds, ...allDynamicIds];
-        
-        allIds.forEach(id => {
-            const element = document.getElementById(id);
-            if (element) {
-                if (element.type === 'checkbox') {
-                    element.checked = false;
-                } else if (element.type === 'number') {
-                    element.value = '';
-                } else if (element.tagName === 'SELECT') {
-                    element.value = element.querySelector('option[value=""]')?.value ?? element.options[0].value;
-                } else {
-                    element.value = '';
-                }
-            }
-        });
-        
-        const slashElement = document.getElementById('slash');
-        if(slashElement) slashElement.value = '普通';
-        const pierceElement = document.getElementById('pierce');
-        if(pierceElement) pierceElement.value = '普通';
-        const bluntElement = document.getElementById('blunt');
-        if(bluntElement) bluntElement.value = '普通';
-        const mindEffectElement = document.getElementById('mind_effect');
-        if(mindEffectElement) mindEffectElement.value = '';
-        const t0AttrElement = document.getElementById('t0_attr');
-        if(t0AttrElement) t0AttrElement.value = 'なし';
-        const t0MatchElement = document.getElementById('t0_match');
-        if(t0MatchElement) t0MatchElement.value = '不可'; 
-        const uniqueCountElement = document.getElementById('uniqueCount');
-        if(uniqueCountElement) uniqueCountElement.value = '1';
-        
-        const sup3Enable = document.getElementById('sup3_enable');
-        if(sup3Enable) {
-            sup3Enable.checked = false;
-            sup3Enable.dispatchEvent(new Event('change'));
-        }
-        const deathpassiveEnable = document.getElementById('deathpassive_enable');
-        if(deathpassiveEnable) {
-            deathpassiveEnable.checked = false;
-            deathpassiveEnable.dispatchEvent(new Event('change'));
-        }
-        const hasUnique = document.getElementById('hasUnique');
-        if(hasUnique) {
-            hasUnique.checked = false;
-            if (document.getElementById('uniqueCountContainer')) {
-                document.getElementById('uniqueCountContainer').style.display = 'none';
-            }
-        }
-        const extraTacticsEnable = document.getElementById('extraTactics_enable');
-        if(extraTacticsEnable) {
-            extraTacticsEnable.checked = false;
-            if (extraTacticsCountContainer) {
-                extraTacticsCountContainer.style.display = 'none';
-            }
-        }
-
-        const extraTacticsCount = document.getElementById('extraTacticsCount');
-        if(extraTacticsCount) extraTacticsCount.value = '0';
-        renderExtraTacticsForms();
-        updateUniqueForms(); // フォームをクリアした状態で再描画
-
-        localStorage.removeItem(localStorageKey);
-        updatePreview(getFormData());
-        updateSlotLabels();
-
-        alert('フォームがクリアされました。');
-    }
-
-    saveBtn?.addEventListener('click', () => {
-        autoSaveAndPreview();
-        alert('キャラクターシートの内容をブラウザに保存しました。次回アクセス時に自動で復元されます。');
-    });
-
-    clearBtn?.addEventListener('click', clearForm);
-
-    downloadBtn?.addEventListener('click', () => {
-        const data = getFormData();
-        const textContent = formatDataAsText(data);
-        const pcName = data.pcName || 'LimbusTRPG_Sheet';
-        downloadText(textContent, `${pcName}.txt`);
-    });
-
-    printBtn?.addEventListener('click', () => {
-        window.print();
-    });
-
-    function formatDataAsText(data) {
-        let text = `=================================================================\n`;
-        text += `■ LimbusTRPG キャラクターシート\n`;
-        text += `=================================================================\n\n`;
-
-        text += `【基本情報】\n`;
-        text += `PC 名: ${data.pcName || '—'}\n`;
-        text += `PL 名: ${data.plName || '—'}\n\n`;
-
-        text += `【ステータス】\n`;
-        text += `人格:【 ${data.persona || '—'}】\n`;
-        text += `HP: ${data.hp || '—'}\n`;
-        text += `SAN: ${data.san || '—'}\n`;
-        text += `速度: ${data.speed || '—'}\n`;
-        text += `精神: ${data.mind || '—'}\n`;
-        text += `精神効果:${data.mind_effect || '—'}\n`;
-        text += `斬撃耐性: ${data.slash || '—'}\n`;
-        text += `貫通耐性: ${data.pierce || '—'}\n`;
-        text += `打撃耐性: ${data.blunt || '—'}\n\n`;
-
-        text += `【パッシブ】\n`;
-        text += `名称: ${data.passive_name || '—'}\n`;
-        text += `発動条件: ${data.passive_condition || '—'}\n`;
-        text += `効果:${data.passive_effect || '—'}\n\n`;
-
-        text += `【サポートパッシブ】\n`;
-        const supports = [
-            { name: data.sup1_name, condition: data.sup1_condition, effect: data.sup1_effect, label: '1' },
-            { name: data.sup2_name, condition: data.sup2_condition, effect: data.sup2_effect, label: '2' }
-        ];
-        if (data.sup3_enable) { 
-            supports.push({ name: data.sup3_name, condition: data.sup3_condition, effect: data.sup3_effect, label: '3' });
-        }
-
-        supports.forEach(sup => {
-            text += `[${sup.label}] 名称: ${sup.name || '—'}\n`;
-            text += `発動条件: ${sup.condition || '—'}\n`;
-            text += `効果:${sup.effect || '—'}\n`;
-        });
-        text += '\n';
-
-        if (data.deathpassive_enable) { 
-            text += `【死亡後パッシブ】\n`;
-            text += `名称: ${data.deathp_name || '—'}\n`;
-            text += `発動条件: ${data.deathp_condition || '—'}\n`;
-            text += `効果:${data.deathp_effect || '—'}\n\n`;
-        }
-
-
-        text += `【戦術】\n`;
-        
-        for (let i = 0; i <= 4; i++) {
-            const name = data[`t${i}_name`];
-            const effect = data[`t${i}_effect`];
-            const sin = data[`t${i}_sin`];
-            const attr = data[`t${i}_attr`];
-
-            if (name || effect) {
-                let header = `戦術${i}: ${name || '名称不明'}`;
-                
-                if (i === 0) {
-                    const guard = data.t0_guard;
-                    const matchStatus = data.t0_match || '可能';
-                    header += ` 守備: ${guard || '—'} / 攻撃: ${attr || '—'} / 罪: ${sin || '—'}/ マッチ処理: ${matchStatus}`; 
-                } else {
-                    // ダウンロード時の戦術1〜4をスラッシュ区切りに修正
-                    header += ` 攻撃: ${attr || '—'} / 罪: ${sin || '—'}`;
-                }
-
-                text += `${header}\n`;
-                text += `効果:${effect || '—'}\n`;
             }
         }
         
@@ -968,59 +689,268 @@ document.addEventListener('DOMContentLoaded', () => {
                 const attr = data[`t${i}_attr`];
                 
                 if (name || effect) {
-                    let header = `戦術${i}:${name || '名称不明'}/【${type}】`;
-                    // ダウンロード時の追加戦術をスラッシュ区切りに修正
-                    header += ` 攻撃: ${attr || '—'} / 罪: ${sin || '—'}`;
-                    
-                    text += `${header}\n`;
-                    text += `効果:${effect || '—'}\n`;
+                    let line = `【戦術${i}：${type}】 ${name || '名称不明'}\n`;
+                    line += `攻撃: ${attr || '—'} / 罪: ${sin || '—'}\n`;
+                    line += `効果: ${effect || '—'}\n\n`;
+                    tacticsText += line;
                 }
             }
         }
-        
-        text += '\n';
 
+        getElementAndSetTextWithBR('pTactics', tacticsText.trim() || '—');
+
+        let uniquePreviewText = '—';
         if (data.hasUnique && data.uniqueCount > 0) {
-            text += `【固有項目】\n`;
+            uniquePreviewText = '';
             const count = Math.min(parseInt(data.uniqueCount) || 0, MAX_UNIQUE_SKILLS);
             for (let i = 0; i < count; i++) {
-                const name = data[`uniqueName_${i}`] || '—';
+                const name = data[`uniqueName_${i}`] || '名称不明';
                 const max = data[`uniqueMax_${i}`] || '—';
                 const type = data[`uniqueType_${i}`] || '—';
                 const effect = data[`uniqueEffect_${i}`] || '—';
-
-                text += `固有#${i+1} 名称: ${name}\n`;
-                text += `  最大数: ${max}/ 種別: ${type}\n`;
-                text += `  効果:${effect}\n`;
+                uniquePreviewText += `【固有 #${i+1}: ${name}】\n`;
+                uniquePreviewText += `最大数: ${max}, 種別: ${type}\n`;
+                uniquePreviewText += `効果:\n${effect}\n\n`;
             }
-            text += '\n';
         }
+        getElementAndSetTextWithBR('pUniqueItems', uniquePreviewText.trim());
 
-        text += `【アイテム / 所持品】\n${data.items || '—'}\n\n`;
+        getElementAndSetText('pItems', data.items || '—');
 
-        text += `【装備 E.G.O】\n`;
+        let egoText = '';
         const egoRanks = ['zayin', 'teth', 'he', 'waw', 'aleph'];
-        
         egoRanks.forEach(rank => {
             const name = data[`ego_${rank}`] || '—';
-            text += `${rank.toUpperCase()}: ${name}\n`;
-
+            egoText += `${rank.toUpperCase()}: ${name}\n`;
             if (name !== '—' && name.trim() !== '') {
                 const condition = data[`ego_${rank}_condition`] || '—';
                 const effect = data[`ego_${rank}_effect`] || '—';
                 const awake = data[`ego_${rank}_awake`] || '—';
                 const corrode = data[`ego_${rank}_corrode`] || '—';
-                
-                text += `  発動条件: ${condition}\n`;
-                text += `  効果:${effect}\n`;
-                text += `  覚醒スキル効果:${awake}\n`;
-                text += `  侵蝕スキル効果:${corrode}\n`;
+                egoText += ` 発動条件: ${condition}\n`;
+                egoText += ` 効果:\n${effect}\n`;
+                egoText += ` 覚醒スキル効果:\n${awake}\n`;
+                egoText += ` 侵蝕スキル効果:\n${corrode}\n\n`;
+            } else {
+                egoText += '\n';
             }
         });
-        text += '\n'; 
+        getElementAndSetTextWithBR('pEgo', egoText.trim() || '—');
+        
+        let currencyText = `LP: ${data.cur_lp || '0'}\n`;
+        currencyText += `自我の欠片: ${data.cur_frag || '0'}`;
+        getElementAndSetText('pCurrency', currencyText);
+        
+        getElementAndSetText('pPersonas', data.owned_personas || '—');
+        getElementAndSetText('pBodyEnhance', data.body_enhance || '—');
+        getElementAndSetText('pOwnedEgo', data.owned_ego || '—');
+        getElementAndSetText('pOwnedSupportPassives', data.owned_support_passives || '—');
+        getElementAndSetText('pOwnedSpirits', data.owned_spirits || '—');
+        getElementAndSetText('pFreeNote1', data.free_note_1 || '—');
+        getElementAndSetText('pFreeNote2', data.free_note_2 || '—');
+    }
+
+    function autoSaveAndPreview() {
+        const data = getFormData();
+        localStorage.setItem(localStorageKey, JSON.stringify(data));
+        updatePreview(data);
+    }
+    
+    function clearForm() {
+        // 静的な入力フィールドをクリア
+        allStaticIds.filter(id => !controlIds.includes(id)).forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.value = '';
+            }
+        });
+
+        // 制御IDは個別に初期化
+        const slashElement = document.getElementById('slash');
+        if(slashElement) slashElement.value = '普通';
+        const pierceElement = document.getElementById('pierce');
+        if(pierceElement) pierceElement.value = '普通';
+        const bluntElement = document.getElementById('blunt');
+        if(bluntElement) bluntElement.value = '普通';
+        const mindEffectElement = document.getElementById('mind_effect');
+        if(mindEffectElement) mindEffectElement.value = '';
+        const t0AttrElement = document.getElementById('t0_attr');
+        if(t0AttrElement) t0AttrElement.value = 'なし';
+        const t0MatchElement = document.getElementById('t0_match');
+        if(t0MatchElement) t0MatchElement.value = '不可';
+        const uniqueCountElement = document.getElementById('uniqueCount');
+        if(uniqueCountElement) uniqueCountElement.value = '1';
+        
+        const sup3Enable = document.getElementById('sup3_enable');
+        if(sup3Enable) {
+            sup3Enable.checked = false;
+            sup3Enable.dispatchEvent(new Event('change'));
+        }
+        
+        const deathpassiveEnable = document.getElementById('deathpassive_enable');
+        if(deathpassiveEnable) {
+            deathpassiveEnable.checked = false;
+            deathpassiveEnable.dispatchEvent(new Event('change'));
+        }
+        
+        const hasUnique = document.getElementById('hasUnique');
+        if(hasUnique) {
+            hasUnique.checked = false;
+            if (document.getElementById('uniqueCountContainer')) {
+                document.getElementById('uniqueCountContainer').style.display = 'none';
+            }
+        }
+        
+        const extraTacticsEnable = document.getElementById('extraTactics_enable');
+        if(extraTacticsEnable) {
+            extraTacticsEnable.checked = false;
+            if (extraTacticsCountContainer) {
+                extraTacticsCountContainer.style.display = 'none';
+            }
+        }
+        
+        const extraTacticsCount = document.getElementById('extraTacticsCount');
+        if(extraTacticsCount) extraTacticsCount.value = '0';
+        
+        renderExtraTacticsForms();
+        updateUniqueForms(); // フォームをクリアした状態で再描画
+        
+        localStorage.removeItem(localStorageKey);
+        updatePreview(getFormData());
+        updateSlotLabels();
+        alert('フォームがクリアされました。');
+    }
+
+    // イベントリスナーの設定
+    sheetForm?.addEventListener('input', autoSaveAndPreview);
+    sheetForm?.addEventListener('change', autoSaveAndPreview);
+    saveBtn?.addEventListener('click', () => {
+        autoSaveAndPreview();
+        alert('キャラクターシートの内容をブラウザに保存しました。次回アクセス時に自動で復元されます。');
+    });
+    clearBtn?.addEventListener('click', clearForm);
+
+    function formatDataAsText(data) {
+        let text = `=================================================================\n`;
+        text += `【キャラクター情報】\n`;
+        text += `PC名: ${data.pcName || '—'}\n`;
+        text += `PL名: ${data.plName || '—'}\n`;
+        text += `人格: ${data.persona || '—'}\n`;
+        text += `LP: ${data.hp || '—'}\n`;
+        text += `SAN値: ${data.san || '—'}\n`;
+        text += `速度: ${data.speed || '—'}\n`;
+        text += `斬撃耐性: ${data.slash || '—'}\n`;
+        text += `貫通耐性: ${data.pierce || '—'}\n`;
+        text += `打撃耐性: ${data.blunt || '—'}\n`;
+        text += `精神力: ${data.mind || '—'}\n`;
+        text += `精神効果: ${data.mind_effect || '—'}\n\n`;
+
+        text += `【パッシブ】\n`;
+        text += `名称: ${data.passive_name || '名称不明'}\n`;
+        text += `発動条件: ${data.passive_condition || '—'}\n`;
+        text += `効果: ${data.passive_effect || '—'}\n\n`;
+
+        text += `【サポートパッシブ】\n`;
+        const supports = [
+            { name: data.sup1_name, condition: data.sup1_condition, effect: data.sup1_effect, label: '1' },
+            { name: data.sup2_name, condition: data.sup2_condition, effect: data.sup2_effect, label: '2' }
+        ];
+
+        if (data.sup3_enable) {
+            supports.push({ name: data.sup3_name, condition: data.sup3_condition, effect: data.sup3_effect, label: '3' });
+        }
+        
+        supports.forEach(sup => {
+            if (sup.name || sup.condition || sup.effect) {
+                text += `SP${sup.label} 名称: ${sup.name || '名称不明'}\n`;
+                text += `発動条件: ${sup.condition || '—'}\n`;
+                text += `効果: ${sup.effect || '—'}\n`;
+            }
+        });
+        text += '\n';
+
+        if (data.deathpassive_enable) {
+            text += `【死亡時パッシブ】\n`;
+            text += `名称: ${data.deathp_name || '名称不明'}\n`;
+            text += `発動条件: ${data.deathp_condition || '—'}\n`;
+            text += `効果:${data.deathp_effect || '—'}\n\n`;
+        }
+
+        text += `【戦術】\n`;
+        for (let i = 0; i <= 4; i++) {
+            const name = data[`t${i}_name`];
+            const effect = data[`t${i}_effect`];
+            const sin = data[`t${i}_sin`];
+            const attr = data[`t${i}_attr`];
+            if (name || effect) {
+                let header = `戦術${i}: ${name || '名称不明'}`;
+                if (i === 0) {
+                    const guard = data.t0_guard;
+                    const matchStatus = data.t0_match || '可能';
+                    header += ` 守備: ${guard || '—'} / 攻撃: ${attr || '—'} / 罪: ${sin || '—'}/ マッチ処理: ${matchStatus}`;
+                } else {
+                    // ダウンロード時の戦術1〜4をスラッシュ区切りに修正
+                    header += ` 攻撃: ${attr || '—'} / 罪: ${sin || '—'}`;
+                }
+                text += `${header}\n`;
+                text += `効果:${effect || '—'}\n`;
+            }
+        }
+        if (data.extraTactics_enable) {
+            const count = Math.min(parseInt(data.extraTacticsCount) || 0, 6);
+            for (let i = 5; i < 5 + count; i++) {
+                const type = data[`t${i}_type`] || '—';
+                const name = data[`t${i}_name`];
+                const effect = data[`t${i}_effect`];
+                const sin = data[`t${i}_sin`];
+                const attr = data[`t${i}_attr`];
+                if (name || effect) {
+                    let header = `戦術${i}:${name || '名称不明'}/【${type}】`;
+                    // ダウンロード時の追加戦術をスラッシュ区切りに修正
+                    header += ` 攻撃: ${attr || '—'} / 罪: ${sin || '—'}`;
+                    text += `${header}\n`;
+                    text += `効果:${effect || '—'}\n`;
+                }
+            }
+        }
+        text += '\n';
 
 
-        text += `【所持通貨】\n`;
+        if (data.hasUnique && data.uniqueCount > 0) {
+            text += `【固有項目】\n`;
+            const count = Math.min(parseInt(data.uniqueCount) || 0, MAX_UNIQUE_SKILLS);
+            for (let i = 0; i < count; i++) {
+                const name = data[`uniqueName_${i}`] || '名称不明';
+                const max = data[`uniqueMax_${i}`] || '—';
+                const type = data[`uniqueType_${i}`] || '—';
+                const effect = data[`uniqueEffect_${i}`] || '—';
+                
+                text += `固有 #${i+1}: ${name || '名称不明'}\n`;
+                text += `最大数: ${max}, 種別: ${type}\n`;
+                text += `効果:\n${effect}\n\n`;
+            }
+        }
+
+        text += `【E.G.O】\n`;
+        const egoRanks = ['zayin', 'teth', 'he', 'waw', 'aleph'];
+        egoRanks.forEach(rank => {
+            const name = data[`ego_${rank}`] || '—';
+            text += `${rank.toUpperCase()}: ${name}\n`;
+            if (name !== '—' && name.trim() !== '') {
+                const condition = data[`ego_${rank}_condition`] || '—';
+                const effect = data[`ego_${rank}_effect`] || '—';
+                const awake = data[`ego_${rank}_awake`] || '—';
+                const corrode = data[`ego_${rank}_corrode`] || '—';
+                text += ` 発動条件: ${condition}\n`;
+                text += ` 効果:\n${effect}\n`;
+                text += ` 覚醒スキル効果:\n${awake}\n`;
+                text += ` 侵蝕スキル効果:\n${corrode}\n\n`;
+            }
+        });
+
+        text += `【その他所持品・メモ】\n`;
+        text += `アイテム: ${data.items || '—'}\n\n`;
+        text += `【資源】\n`;
         text += `LP: ${data.cur_lp || '0'}\n`;
         text += `自我の欠片: ${data.cur_frag || '0'}\n\n`;
 
@@ -1029,11 +959,9 @@ document.addEventListener('DOMContentLoaded', () => {
         text += `【所持 E.G.O】\n${data.owned_ego || '—'}\n\n`;
         text += `【所持サポートパッシブ】\n${data.owned_support_passives || '—'}\n\n`;
         text += `【所持精神】\n${data.owned_spirits || '—'}\n\n`;
-
         text += `【自由記入欄 1】\n${data.free_note_1 || '—'}\n\n`;
         text += `【自由記入欄 2】\n${data.free_note_2 || '—'}\n`;
         text += `=================================================================\n`;
-
         return text;
     }
 
@@ -1048,7 +976,43 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
     }
+    
+    downloadBtn?.addEventListener('click', () => {
+        const data = getFormData();
+        const textContent = formatDataAsText(data);
+        const pcName = data.pcName || 'LimbusTRPG_Sheet';
+        downloadText(textContent, `${pcName}.txt`);
+    });
 
+    printBtn?.addEventListener('click', () => {
+        // フォームの内容を一時的に非表示にし、プレビューだけを表示して印刷
+        sheetForm.style.display = 'none';
+        const buttonsToHide = [clearBtn, saveBtn, downloadBtn, printBtn, pageTopBtn, searchButton];
+        buttonsToHide.forEach(btn => {
+            if (btn) btn.style.display = 'none';
+        });
+
+        window.print();
+        
+        // 印刷後に元に戻す
+        sheetForm.style.display = 'grid';
+        buttonsToHide.forEach(btn => {
+            if (btn) btn.style.display = '';
+        });
+    });
+
+    pageTopBtn?.addEventListener('click', () => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    });
+    
+    window.addEventListener('scroll', () => {
+        if (pageTopBtn) {
+            pageTopBtn.style.display = (window.scrollY > 200) ? 'block' : 'none';
+        }
+    });
 
     const sup3EnableCheckbox = document.getElementById('sup3_enable');
     const sup3Wrapper = document.getElementById('sup3_wrapper');
@@ -1078,7 +1042,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     });
-
+    
     function getSlotKey(slot) {
         return `${localStorageKey}_slot${slot}`;
     }
@@ -1088,18 +1052,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const slotKey = getSlotKey(i);
             const slotData = localStorage.getItem(slotKey);
             const label = document.getElementById(`slot${i}_label`);
-
-            if (label) { 
+            if (label) {
                 if (slotData) {
                     try {
                         const data = JSON.parse(slotData);
-                        const pcName = data.pcName || `無名のPC`;
-                        label.textContent = `スロット ${i}: ${pcName}`;
-                    } catch (e) {
-                        label.textContent = `スロット ${i}: (破損データ)`;
+                        label.textContent = `S${i}: ${data.pcName || '無題'}`;
+                    } catch {
+                        label.textContent = `S${i}: (データ破損)`;
                     }
                 } else {
-                    label.textContent = `スロット ${i}: (空)`;
+                    label.textContent = `スロット ${i}:`;
                 }
             }
         }
@@ -1107,78 +1069,74 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('.slot-save').forEach(button => {
         button.addEventListener('click', (e) => {
-            const slot = e.target.dataset.slot;
+            const slot = e.target.getAttribute('data-slot');
             const data = getFormData();
             const slotKey = getSlotKey(slot);
             localStorage.setItem(slotKey, JSON.stringify(data));
-            alert(`スロット ${slot} に現在のシート内容を保存しました。`);
             updateSlotLabels();
+            alert(`スロット ${slot} に現在のシートを保存しました。`);
         });
     });
 
     document.querySelectorAll('.slot-load').forEach(button => {
         button.addEventListener('click', (e) => {
-            const slot = e.target.dataset.slot;
+            const slot = e.target.getAttribute('data-slot');
             const slotKey = getSlotKey(slot);
-            const slotData = localStorage.getItem(slotKey);
-
-            if (slotData) {
+            const savedData = localStorage.getItem(slotKey);
+            if (savedData) {
                 try {
-                    const data = JSON.parse(slotData);
+                    const data = JSON.parse(savedData);
                     setFormData(data);
-                    autoSaveAndPreview(); 
-                    alert(`スロット ${slot} の内容を読み込みました。`);
+                    updatePreview(data);
+                    alert(`スロット ${slot} のデータを読み込みました。`);
                 } catch (error) {
-                    alert(`スロット ${slot} のデータは破損しています。`);
+                    console.error("スロットデータの読み込みに失敗しました:", error);
+                    alert(`エラー: スロット ${slot} のデータ読み込みに失敗しました。データが破損している可能性があります。`);
                 }
             } else {
-                alert(`スロット ${slot} は空です。`);
+                alert(`スロット ${slot} に保存されたデータはありません。`);
             }
         });
     });
 
     document.querySelectorAll('.slot-delete').forEach(button => {
         button.addEventListener('click', (e) => {
-            const slot = e.target.dataset.slot;
-            if (confirm(`スロット ${slot} のデータを完全に削除しますか？`)) {
+            const slot = e.target.getAttribute('data-slot');
+            if (confirm(`スロット ${slot} のデータを削除してもよろしいですか？`)) {
                 const slotKey = getSlotKey(slot);
                 localStorage.removeItem(slotKey);
-                alert(`スロット ${slot} のデータを削除しました。`);
                 updateSlotLabels();
+                alert(`スロット ${slot} のデータを削除しました。`);
             }
         });
     });
 
+
     const hasUniqueCheckbox = document.getElementById('hasUnique');
-    const countContainer = document.getElementById('uniqueCountContainer'); 
+    const countContainer = document.getElementById('uniqueCountContainer');
     const uniqueCountInput = document.getElementById('uniqueCount');
     const uniqueFormsContainer = document.getElementById('uniqueFormsContainer');
 
-    
     function createUniqueForm(index) {
-        const formTitle = `固有 #${index + 1}`; 
-        
+        const formTitle = `固有 #${index + 1}`;
         const formHtml = `
             <div class="unique-skill-form" style="border: 1px solid #ccc; padding: 10px; margin-top: 10px;">
                 <h4 style="margin-top: 0;">${formTitle}</h4>
-                
                 <label>名称</label>
                 <input id="uniqueName_${index}" type="text" placeholder="名称">
-
-                <label style="margin-top:6px">最大数</label> 
+                <label style="margin-top:6px">最大数</label>
                 <input id="uniqueMax_${index}" type="number" placeholder="最大数">
-
-                <label style="margin-top:6px">種別</label> 
+                <label style="margin-top:6px">種別</label>
                 <select id="uniqueType_${index}">
                     <option value="バフ">バフ</option>
                     <option value="デバフ">デバフ</option>
                     <option value="中立バフ">中立バフ</option>
                 </select>
-
                 <label style="margin-top:6px">効果</label>
                 <textarea id="uniqueEffect_${index}" placeholder="効果"></textarea>
             </div>
         `;
+        
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = formHtml.trim();
         const formElement = tempDiv.firstChild;
@@ -1197,85 +1155,57 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateUniqueForms() {
         if (!uniqueFormsContainer) return;
         
-        if (!countContainer || document.getElementById('hasUnique')?.checked !== true) {
-            uniqueFormsContainer.innerHTML = '';
-            return;
-        }
-        
-        let count = parseInt(uniqueCountInput?.value) || 0;
+        const count = parseInt(uniqueCountInput?.value) || 0;
+        const currentForms = uniqueFormsContainer.querySelectorAll('.unique-skill-form');
+        const countToRender = Math.min(count, MAX_UNIQUE_SKILLS);
 
-        count = Math.max(0, count);
-        count = Math.min(count, MAX_UNIQUE_SKILLS);
-
-        if (uniqueCountInput && parseInt(uniqueCountInput.value) !== count) {
-            uniqueCountInput.value = count;
-        }
-
-        const currentForms = uniqueFormsContainer.children.length;
-        
-        if (count > currentForms) {
-            for (let i = currentForms; i < count; i++) {
-                uniqueFormsContainer.appendChild(createUniqueForm(i));
-            }
-        } else if (count < currentForms) {
-            for (let i = currentForms - 1; i >= count; i--) {
-                uniqueFormsContainer.removeChild(uniqueFormsContainer.children[i]);
+        // 既存フォームの削除または再利用
+        for (let i = currentForms.length - 1; i >= 0; i--) {
+            if (i >= countToRender) {
+                currentForms[i].remove();
             }
         }
-        
+
+        // 新しいフォームの追加
+        for (let i = currentForms.length; i < countToRender; i++) {
+            const newForm = createUniqueForm(i);
+            uniqueFormsContainer.appendChild(newForm);
+        }
+    }
+    
+    if (hasUniqueCheckbox && countContainer) {
+        hasUniqueCheckbox.addEventListener('change', (e) => {
+            countContainer.style.display = e.target.checked ? 'block' : 'none';
+            updateUniqueForms(); // チェックボックスのオン/オフでフォームを更新
+            autoSaveAndPreview();
+        });
+    }
+
+    uniqueCountInput?.addEventListener('input', () => {
+        updateUniqueForms();
         autoSaveAndPreview();
-    }
+    });
 
-    if (hasUniqueCheckbox) {
-        hasUniqueCheckbox.addEventListener('change', function() {
-            if (this.checked) {
-                if (countContainer) countContainer.style.display = 'block'; 
-                updateUniqueForms(); 
-            } else {
-                if (countContainer) countContainer.style.display = 'none';
-                if (uniqueFormsContainer) uniqueFormsContainer.innerHTML = '';
-                if (uniqueCountInput) uniqueCountInput.value = '1'; 
-                autoSaveAndPreview();
-            }
-        });
-    }
-
-    if (uniqueCountInput) {
-        uniqueCountInput.addEventListener('input', updateUniqueForms);
-    }
-    
-    if (extraTacticsEnable && extraTacticsCountContainer && extraTacticsCount) {
-        extraTacticsEnable.addEventListener('change', function() {
-            extraTacticsCountContainer.style.display = this.checked ? 'block' : 'none';
-            
-            if (!this.checked) {
-                extraTacticsCount.value = 0;
-            }
-            renderExtraTacticsForms();
-            autoSaveAndPreview();
-        });
-
-        extraTacticsCount.addEventListener('input', function() {
-            let value = parseInt(this.value);
-            if (isNaN(value) || value < 0) value = 0;
-            if (value > 6) value = 6;
-            this.value = value;
-
+    const extraTacticsEnableCheckbox = document.getElementById('extraTactics_enable');
+    if (extraTacticsEnableCheckbox && extraTacticsCountContainer) {
+        extraTacticsEnableCheckbox.addEventListener('change', (e) => {
+            extraTacticsCountContainer.style.display = e.target.checked ? 'block' : 'none';
             renderExtraTacticsForms();
             autoSaveAndPreview();
         });
     }
-    
+
+    extraTacticsCount?.addEventListener('input', () => {
+        renderExtraTacticsForms();
+        autoSaveAndPreview();
+    });
+
     // ====================================================================
     // ▼ 検索機能のイベントリスナー（ここから検索機能のコード）
     // ====================================================================
     if (searchButton && searchModal) {
         searchButton.addEventListener('click', () => {
-            searchModal.style.display = 'flex';
-            searchInput.focus();
-            
-            // モーダルを開くときに、現在の選択で検索を一度実行
-            performSearch(searchInput.value || ''); 
+            searchModal.style.display = 'block';
         });
 
         if (closeBtn) {
@@ -1301,33 +1231,51 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     function initialize() {
-        const savedData = localStorage.getItem(localStorageKey);
-        if (savedData) {
-            try {
-                const data = JSON.parse(savedData);
-                setFormData(data);
-                updatePreview(data);
-            } catch (e) {
-                console.error("保存されたデータの読み込みに失敗しました:", e);
-                localStorage.removeItem(localStorageKey);
+        // initializeCsvSelectorの完了を待ってから、シートの初期化を行う
+        initializeCsvSelector().then(() => {
+            const savedData = localStorage.getItem(localStorageKey);
+            if (savedData) {
+                try {
+                    const data = JSON.parse(savedData);
+                    setFormData(data);
+                    updatePreview(data);
+                } catch (e) {
+                    console.error("保存されたデータの読み込みに失敗しました:", e);
+                    localStorage.removeItem(localStorageKey);
+                    updatePreview(getFormData());
+                }
+            } else {
                 updatePreview(getFormData());
             }
-        } else {
-            updatePreview(getFormData());
-        }
-        
-        updateUniqueForms();
-        renderExtraTacticsForms();
-        
-        updateSlotLabels();
+            
+            updateUniqueForms();
+            renderExtraTacticsForms();
+            
+            updateSlotLabels();
+        }).catch(error => {
+            console.error("CSVデータの初期ロードに失敗しました:", error);
+            // CSVロード失敗時でもシート機能は使えるように、シート機能のみ初期化を続ける
+            const savedData = localStorage.getItem(localStorageKey);
+            if (savedData) {
+                try {
+                    const data = JSON.parse(savedData);
+                    setFormData(data);
+                    updatePreview(data);
+                } catch (e) {
+                    console.error("保存されたデータの読み込みに失敗しました:", e);
+                    localStorage.removeItem(localStorageKey);
+                    updatePreview(getFormData());
+                }
+            } else {
+                updatePreview(getFormData());
+            }
+            updateUniqueForms();
+            renderExtraTacticsForms();
+            updateSlotLabels();
+        });
     }
 
-    // 既存の initialize() の代わりに、CSVデータロード後の初期化を確実にする
     // initializeCsvSelector() の結果を待ってからシートを初期化
-    initializeCsvSelector().then(() => {
-        initialize();
-    });
+    initialize();
+
 });
-
-
-
