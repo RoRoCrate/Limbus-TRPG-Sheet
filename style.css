@@ -102,6 +102,10 @@ textarea { min-height: 80px; resize: vertical; }
 .row { display: flex; gap: 12px; }
 .col { flex: 1; }
 
+.tactic-block textarea {
+  height: 60px; /* 他の戦術ブロックと統一 */
+}
+
 /* =======================
 ステータスグリッド
 ======================= */
@@ -145,8 +149,8 @@ position: fixed;
 left: 0; /* 左端に配置 */
 bottom: 20px;
 padding: 10px 14px;
-background: #222;
-color: #fff;
+background: #8792f3;
+color: #ffffff;
 font-size: 14px;
 border-radius: 8px;
 cursor: pointer;
@@ -174,3 +178,197 @@ button, input, textarea, select { display: none; }
 }
 .stat-grid { display:grid; grid-template-columns: repeat(2,1fr); gap:8px; }
 .stat { display:flex; flex-direction:column; }
+
+/* =======================
+検索機能（Search Modal）
+======================= */
+/* 検索ボタン */
+#searchButton {
+    /* 既存の .btn スタイルを流用しつつ、目立たせる */
+    background: #007bff;
+    color: white;
+    font-weight: bold;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* モーダル背景 */
+#searchModal {
+    display: none; /* 初期は非表示。JSで 'flex' に変更 */
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.3s forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* モーダル本体 */
+.search-modal-content {
+    background-color: var(--card);
+    padding: 20px;
+    border: 1px solid #888;
+    width: 90%;
+    max-width: 800px;
+    border-radius: var(--radius);
+    position: relative;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+    max-height: 90vh; /* 画面の高さに合わせる */
+    display: flex;
+    flex-direction: column;
+}
+
+/* 閉じるボタン */
+.close-btn {
+    color: var(--muted);
+    font-size: 28px;
+    font-weight: bold;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close-btn:hover,
+.close-btn:focus {
+    color: var(--accent);
+}
+
+/* 複合検索の動的入力欄コンテナ */
+#searchInputsContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--glass);
+}
+
+/* 個別入力グループ */
+.search-input-group {
+    display: flex;
+    flex-direction: column;
+    min-width: 120px;
+    flex: 1;
+    min-width: calc(33% - 7px); /* 基本3列レイアウト */
+}
+
+.search-input-group label {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 4px;
+}
+
+.search-input-group input,
+.search-input-group select {
+    padding: 8px;
+    border-radius: 4px;
+    background-color: #2b2f55;
+    border: 1px solid #5560aa;
+    color: #fff;
+    font-size: 14px;
+}
+
+/* メインのキーワード検索欄 */
+#searchInput {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--accent);
+    background-color: var(--card);
+    color: white;
+    font-size: 16px;
+}
+
+/* 検索結果エリア */
+#searchResults {
+    flex-grow: 1;
+    overflow-y: auto; /* スクロール可能にする */
+    margin-top: 10px;
+    padding-right: 10px; /* スクロールバーのための余白 */
+}
+
+/* 個別検索結果 */
+.search-result-item {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-left: 3px solid var(--accent);
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+}
+
+.search-result-item p {
+    margin: 4px 0;
+    font-size: 14px;
+}
+
+.search-result-item strong {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+/* 効果テキスト */
+.result-effect {
+    white-space: pre-wrap; /* 効果の改行を保持 */
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 8px !important;
+    padding: 5px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+/* モバイル対応 */
+@media (max-width: 768px) {
+    .search-modal-content {
+        width: 95%;
+        margin: 20px auto;
+    }
+    
+    .search-input-group {
+        min-width: calc(50% - 5px); /* 2列レイアウト */
+    }
+}
+@media (max-width: 500px) {
+    .search-input-group {
+        min-width: 100%; /* 1列レイアウト */
+    }
+}
+
+/* =======================
+検索機能（Search Modal）
+======================= */
+/* 検索ボタンを右下に固定する */
+#searchButton {
+    /* FIXED POSITIONING */
+    position: fixed; /* 常に画面に追従 */
+    right: 20px;     /* 右端から20pxの位置に変更 */
+    bottom: 20px;    /* ページトップボタン（bottom: 20px）の上に配置 */
+    z-index: 9998;   /* 他の要素の上に表示 */
+    
+    /* VISUALS (色などを指定) */
+    background: #007bff; 
+    color: white;
+    font-weight: bold;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
