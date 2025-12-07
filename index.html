@@ -58,11 +58,12 @@
       <input id="searchInput" type="text" placeholder="名称、番号、効果、資源などを検索..." style="width:100%;" />
     </div>
 
-    <h3>検索結果</h3>
-    <div id="searchResultsContainer" class="results-scroll-area">
-      <div id="searchResults">
-        <p style="color:var(--muted)">検索対象を選択し、キーワードまたはフィルタを入力してください。</p>
-      </div>
+  <h3 style="margin-top: 20px;">検索結果</h3>
+    
+    <div id="searchResultWrapper" style="max-height: 400px; overflow-y: auto; padding: 10px; border: 1px solid var(--accent); border-radius: 8px; background-color: rgba(0, 0, 0, 0.2);">
+        <div id="searchResults">
+            <p>キーワードを入力し、検索対象を選択してください。</p>
+        </div>
     </div>
   </div>
 </div>
