@@ -39,6 +39,33 @@
   
 
   <div id="pageTopBtn">▲ TOP</div>
+
+  <button id="searchButton" class="btn">データ検索</button>
+
+ <div id="searchModal" class="modal">
+  <div class="modal-content">
+    <span class="close-btn">&times;</span>
+    <h2>データ検索</h2>
+
+    <div class="search-controls">
+      <label>検索対象データ</label>
+      <select id="csvSelector"></select>
+
+      <div id="searchInputsContainer" class="dynamic-inputs">
+        </div>
+      
+      <label style="margin-top:12px;">キーワード検索 (全項目対象)</label>
+      <input id="searchInput" type="text" placeholder="名称、番号、効果、資源などを検索..." style="width:100%;" />
+    </div>
+
+    <h3>検索結果</h3>
+    <div id="searchResultsContainer" class="results-scroll-area">
+      <div id="searchResults">
+        <p style="color:var(--muted)">検索対象を選択し、キーワードまたはフィルタを入力してください。</p>
+      </div>
+    </div>
+  </div>
+</div>
   
     <main class="container">
     <section>
