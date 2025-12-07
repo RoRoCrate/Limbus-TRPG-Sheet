@@ -54,14 +54,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const dataCache = {}; 
     
     // 検索対象となるCSVファイルと表示名のリスト
+    // ★ 修正: ファイル名を .tsv に変更 (実際のファイル名と合わせる)
     const CSV_FILE_MAP = {
-        'identity': { name: '人格', filename: 'identity.csv' },
-        'singularidentity': { name: '特異人格', filename: 'singularidentity.csv' },
-        'suppassive': { name: 'サポートパッシブ', filename: 'suppassive.csv' },
-        'item': { name: 'アイテム', filename: 'item.csv' },
-        'mental': { name: '精神 (SAN/EGO)', filename: 'mental.csv' },
-        'status': { name: '状態異常', filename: 'status.csv' },
-        'ego': { name: 'E.G.O', filename: 'ego.csv' }, // E.G.Oを追加
+        'identity': { name: '人格', filename: 'identity.tsv' },
+        'singularidentity': { name: '特異人格', filename: 'singularidentity.tsv' },
+        'suppassive': { name: 'サポートパッシブ', filename: 'suppassive.tsv' },
+        'item': { name: 'アイテム', filename: 'item.tsv' },
+        'mental': { name: '精神 (SAN/EGO)', filename: 'mental.tsv' },
+        'status': { name: '状態異常', filename: 'status.tsv' },
+        'ego': { name: 'E.G.O', filename: 'ego.tsv' }, // E.G.Oを追加
     };
 
     // CSVヘッダー（キー）と検索フィールドのマッピング定義
@@ -103,16 +104,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * CSVテキストをオブジェクトの配列に変換する関数
+     * ★ 修正: デリミタをタブ文字 ('\t') に変更し、TSVとして解析する
      */
-    function csvToArrayOfObjects(csvText) {
-        const lines = csvText.trim().split('\n').filter(line => line.trim() !== '');
+    function csvToArrayOfObjects(tsvText) {
+        const lines = tsvText.trim().split('\n').filter(line => line.trim() !== '');
         if (lines.length === 0) return [];
         
-        const headers = lines[0].split(',').map(header => header.trim());
+        // ★ 修正箇所: split(',') を split('\t') に変更
+        const headers = lines[0].split('\t').map(header => header.trim());
         const data = [];
 
         for (let i = 1; i < lines.length; i++) {
-            const values = lines[i].split(',');
+            // ★ 修正箇所: split(',') を split('\t') に変更
+            const values = lines[i].split('\t');
             const item = {};
 
             for (let j = 0; j < headers.length && j < values.length; j++) {
@@ -146,6 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             const csvText = await response.text();
+            // TSVとして解析する関数を呼び出す
             const parsedData = csvToArrayOfObjects(csvText);
             
             dataCache[key] = parsedData;
