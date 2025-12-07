@@ -1279,5 +1279,3 @@ document.addEventListener('DOMContentLoaded', () => {
     initialize();
 
 });
-
-
