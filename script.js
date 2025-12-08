@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
             { id: 'search_sp_type', label: '通常/死亡', type: 'select', options: ['', '通常', '死亡'], csvKey: '種別' },
             { id: 'search_sp_resource', label: '資源', type: 'select', options: ['', '憤怒', '色欲','怠惰','暴食','憂鬱','傲慢','嫉妬','なし'], csvKey:'資源' },
             { id: 'search_sp_ownership', label: '保有/共鳴', type: 'select', options: ['', '保有', '共鳴','なし'], csvKey: '保有・共鳴' },
-            { id: 'search_sp_price', label: '価格範囲', type: 'text', csvKey: '価格', placeholder: 'LP' }
+            { id: 'search_sp_price', label: '価格範囲', type: 'text', csvKey: '価格', placeholder: '通常：LP 死亡：欠片' }
         ],
         'mental': [
             { id: 'search_mental_name', label: '名称', type: 'text', csvKey: '名称', placeholder: '萎縮...' },
@@ -1218,3 +1218,4 @@ document.addEventListener('DOMContentLoaded', () => {
     initialize();
 
 });
+
