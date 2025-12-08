@@ -54,11 +54,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const CSV_FILE_MAP = {
         'identity': { 
-            name: '人格', 
+            name: '人格(未実装)', 
             url: './identity.tsv' 
         },
         'singularidentity': { 
-            name: '特異人格', 
+            name: '特異人格(未実装)', 
             url: './singularidentity.tsv' 
         },
         'suppassive': { 
@@ -1218,6 +1218,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initialize();
 
 });
+
 
 
 
