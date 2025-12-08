@@ -39,9 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
     'extraTacticsCount'];
     const allStaticIds = [...inputIds, ...controlIds];
 
-    // ====================================================================
-    // ▼ CSV検索機能の定数とロジック（ここから検索機能のコード）
-    // ====================================================================
+
     const searchButton = document.getElementById('searchButton');
     const searchModal = document.getElementById('searchModal');
     const closeBtn = searchModal ? searchModal.querySelector('.close-btn') : null;
@@ -53,40 +51,38 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentSearchData = []; 
     const dataCache = {}; 
     
-    // 検索対象となるCSVファイルと表示名のリスト
+
     const CSV_FILE_MAP = {
         'identity': { 
             name: '人格', 
-            url: './identity.tsv' // ★ 変更: ローカルファイルパス
+            url: './identity.tsv' 
         },
         'singularidentity': { 
             name: '特異人格', 
-            url: './singularidentity.tsv' // ★ 変更: ローカルファイルパス
+            url: './singularidentity.tsv' 
         },
         'suppassive': { 
             name: 'サポートパッシブ', 
-            url: './suppassive.tsv' // ★ 変更: ローカルファイルパス
+            url: './suppassive.tsv' 
         },
         'mental': { 
             name: '精神', 
-            url: './mental.tsv' // ★ 変更: ローカルファイルパス
+            url: './mental.tsv'
         },
         'ego': { 
             name: 'E.G.O', 
-            url: './ego.tsv' // ★ 変更: ローカルファイルパス
+            url: './ego.tsv' 
         },
         'status': { 
             name: '状態異常', 
-            url: './status.tsv' // ★ 変更: ローカルファイルパス
+            url: './status.tsv'
         },
         'item': { 
             name: 'アイテム', 
-            url: './item.tsv' // ★ 変更: ローカルファイルパス
+            url: './item.tsv'
         } 
     };
 
-    // CSVヘッダー（キー）と検索フィールドのマッピング定義
-    // csvKey: 検索対象となるCSVファイルの列名
     const SEARCH_FIELDS = {
         'identity': [
             { id: 'search_id_no', label: '番号', type: 'text', csvKey: '番号', placeholder: '半角数字を入力...' },
@@ -122,20 +118,15 @@ document.addEventListener('DOMContentLoaded', () => {
         ]
     };
 
-    /**
-     * TSVのテキストをオブジェクトの配列に変換する関数
-     */
     function csvToArrayOfObjects(tsvText) {
-        // 物理的な改行で一旦行を分割する (ここが項目内改行の制限となる)
+
         const lines = tsvText.trim().split(/\r?\n/).filter(line => line.trim() !== '');
         if (lines.length === 0) return [];
         
         const delimiter = '\t';
         
-        // 正規表現: タブで分割するが、ダブルクォーテーションで囲まれた内部のタブは無視する
         const fieldSplitRegex = new RegExp(`${delimiter}(?=(?:[^"]*"[^"]*")*[^"]*$)`);
 
-        // ヘッダー行をパース
         const headers = lines[0].split(fieldSplitRegex).map(header => {
             let cleanHeader = header.trim();
             if (cleanHeader.startsWith('"') && cleanHeader.endsWith('"')) {
@@ -147,17 +138,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = [];
 
         for (let i = 1; i < lines.length; i++) {
-            // データ行をパース
             const rawValues = lines[i].split(fieldSplitRegex);
             
             const values = rawValues.map(value => {
-                // 引用符の削除とエスケープ解除
                 let cleanValue = value.trim();
                 if (cleanValue.startsWith('"') && cleanValue.endsWith('"')) {
                     cleanValue = cleanValue.slice(1, -1).replace(/""/g, '"');
                 }
                 
-                // [BR] (カスタム改行)、\n (エスケープ改行)、全角改行文字などを \n に置換する
                 return cleanValue
                     .replace(/\<BR\>/g, '\n')
                     .replace(/\\n/g, '\n')
@@ -173,10 +161,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return data;
     }
 
-    /**
-     * 選択されたCSVファイルをロードし、キャッシュに保存する関数
-     * ★ 修正: 相対パスでの読み込みを許可し、URLの場合はキャッシュ防止クエリを付与する
-     */
     async function loadCsvData(key) {
         if (dataCache[key]) {
             console.log(`データ '${key}' はキャッシュからロードされました。`);
@@ -190,7 +174,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            // file.url の値（相対パスまたはURL）をそのままデータパスとして使用
             const dataPath = file.url;
             
             if (!dataPath) {
@@ -198,7 +181,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 return [];
             }
             
-            // URLの場合はキャッシュ防止クエリを付与、それ以外（相対パスなど）はそのまま
             const isExternalUrl = dataPath.startsWith('http://') || dataPath.startsWith('https://');
             const fetchPath = isExternalUrl ? 
                 `${dataPath}?t=${new Date().getTime()}` : 
@@ -206,13 +188,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const response = await fetch(fetchPath);
             if (!response.ok) {
-                // ファイル名とパス情報を含めてより詳細に警告
                 console.warn(`${file.name} のロードに失敗しました (Path: ${fetchPath}, Status: ${response.status})。空のデータを使用します。`);
                 return [];
             }
             
             const csvText = await response.text();
-            // TSVとして解析する関数を呼び出す
             const parsedData = csvToArrayOfObjects(csvText);
             
             dataCache[key] = parsedData;
@@ -220,15 +200,11 @@ document.addEventListener('DOMContentLoaded', () => {
             return parsedData;
 
         } catch (error) {
-            // エラーメッセージをより明確に
             console.error(`データロード中にエラーが発生しました: ${file.name} (Path: ${file.url})`, error); 
             return [];
         }
     }
     
-    /**
-     * 選択されたCSVデータタイプに基づいて、検索フォームの入力項目を動的に生成する
-     */
     function renderSearchInputs(selectedKey) {
         if (!searchInputsContainer) return;
 
@@ -254,17 +230,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         searchInputsContainer.innerHTML = html;
         
-        // 新しい入力要素にイベントリスナーを追加して、変更があったら検索を実行
         searchInputsContainer.querySelectorAll('input, select').forEach(element => {
-            // キーワード入力欄と連動させる
             element.addEventListener('input', () => performSearch(searchInput.value));
             element.addEventListener('change', () => performSearch(searchInput.value));
         });
     }
 
-    /**
-     * 検索結果を指定の形式で表示する関数
-     */
     function renderResults(filteredResults, selectedKey) {
         const resultsContainer = document.getElementById('searchResults');
         if (!resultsContainer) return;
@@ -279,20 +250,15 @@ document.addEventListener('DOMContentLoaded', () => {
         filteredResults.forEach(item => {
             let itemDetailsHtml = '';
             
-            // itemオブジェクトのキーを反復処理し、「ヘッダー：該当行内容」の形式で改行して表示
             for (const header in item) {
-                // 値が空でない場合のみ表示することで、冗長な情報を避ける
                 const content = item[header] ? item[header].trim() : '';
                 
                 if (content !== '') {
-                    // <p>タグを使って改行し、太字でヘッダーを強調
                     itemDetailsHtml += `<p style="margin: 2px 0; font-size: 14px;"><strong>${header}</strong>: ${content}</p>`;
                 }
             }
             
-            // 項目が一つもなかった場合（CSVが空のセルのみだった場合など）のフォールバック
             if (itemDetailsHtml === '') {
-                 // キーのみが存在する場合、少なくとも何らかのデータがあったことを示す
                  const hasKeys = Object.keys(item).length > 0;
                  itemDetailsHtml = `<p style="margin: 2px 0; font-size: 14px;"><strong>データ</strong>: ${hasKeys ? 'すべての列が空です' : '—'}</p>`;
             }
@@ -309,9 +275,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    /**
-     * 検索を実行し結果を表示する関数 (複合検索対応)
-     */
     function performSearch(query) {
         const resultsContainer = document.getElementById('searchResults');
         if (!resultsContainer || !searchInputsContainer) return;
@@ -320,8 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const lowerCaseQuery = query.toLowerCase();
         const selectedKey = csvSelector.value;
         const fields = SEARCH_FIELDS[selectedKey] || [];
-        
-        // 1. 動的な入力値を取得
+
         const dynamicFilters = {};
         let isAnyDynamicFilterSet = false;
         
@@ -330,7 +292,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (element) {
                 const value = element.value.trim();
                 if (value !== '' && value !== 'すべて') {
-                    // selectの場合は完全一致、textの場合は部分一致を想定
                     dynamicFilters[field.csvKey] = {
                         value: value.toLowerCase(),
                         isSelect: field.type === 'select'
@@ -350,7 +311,6 @@ document.addEventListener('DOMContentLoaded', () => {
             let keywordMatch = true;
             let dynamicFilterMatch = true;
 
-            // キーワード検索 (キーワードが入力されている場合のみ実行)
             if (query.trim() !== '') {
                 keywordMatch = keys.some(key => {
                     const value = item[key];
@@ -358,19 +318,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
-            // 動的フィルタの適用
             for (const csvKey in dynamicFilters) {
                 const filter = dynamicFilters[csvKey];
                 const itemValue = String(item[csvKey] || '').toLowerCase();
                 
-                if (filter.isSelect) {
-                    // Selectボックスのフィルタ（完全一致）
+                const isResourceFilter = (
+                    selectedKey === 'suppassive' && 
+                    csvKey === '資源' 
+                );
+
+                if (isResourceFilter) {
+                    if (filter.value === 'なし') {
+                        if (itemValue !== 'なし') {
+                            dynamicFilterMatch = false;
+                            break;
+                        }
+                    } else {
+                        if (!itemValue.includes(filter.value)) {
+                            dynamicFilterMatch = false;
+                            break;
+                        }
+                    }
+                } else if (filter.isSelect) {
+
                     if (itemValue !== filter.value) {
                         dynamicFilterMatch = false;
                         break; 
                     }
                 } else {
-                    // テキスト入力のフィルタ（部分一致）
                     if (!itemValue.includes(filter.value)) {
                         dynamicFilterMatch = false;
                         break;
@@ -384,11 +359,8 @@ document.addEventListener('DOMContentLoaded', () => {
         renderResults(filteredResults, selectedKey);
     }
 
-    /**
-     * CSV選択肢を生成し、初期データをロードする
-     */
+
     async function initializeCsvSelector() {
-        // セレクトボックスのオプションを生成
         for (const key in CSV_FILE_MAP) {
             const option = document.createElement('option');
             option.value = key;
@@ -396,27 +368,21 @@ document.addEventListener('DOMContentLoaded', () => {
             csvSelector.appendChild(option);
         }
 
-        // 初期選択データをロード 
+
         const initialKey = csvSelector.value;
         currentSearchData = await loadCsvData(initialKey);
-        renderSearchInputs(initialKey); // 初期入力フォームを生成
+        renderSearchInputs(initialKey); 
         
-        // CSV選択が変更されたときの処理
         csvSelector.addEventListener('change', async (e) => {
             searchInput.value = ''; 
             searchResults.innerHTML = '<p style="color:var(--muted)">対象のデータセットがロードされました。キーワードを入力してください。</p>';
             
             const selectedKey = e.target.value;
             currentSearchData = await loadCsvData(selectedKey);
-            renderSearchInputs(selectedKey); // 変更後の入力フォームを生成
-            performSearch(''); // フォーム切り替え時にも検索を実行
+            renderSearchInputs(selectedKey);
+            performSearch(''); 
         });
     }
-
-    // ====================================================================
-    // ▲ CSV検索機能の定数とロジック（ここまで検索機能のコード）
-    // ====================================================================
-    
 
     function generateExtraTacticForm(index) {
         return `
@@ -530,7 +496,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function setFormData(data) {
-        // 1. 制御ID（チェックボックス、カウント）の値を設定
         controlIds.forEach(id => {
             const element = document.getElementById(id);
             if (element && data[id] !== undefined) {
@@ -542,7 +507,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 2. 動的フォームの表示/非表示を制御
         const hasUniqueCheckbox = document.getElementById('hasUnique');
         const extraTacticsEnableCheckbox = document.getElementById('extraTactics_enable');
         
@@ -559,12 +523,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // 3. 動的フォームをデータに基づいて再生成
         updateUniqueForms();
         renderExtraTacticsForms();
 
 
-        // 4. 動的に生成されたIDを含めて、すべての要素に値を設定し直す
         const dynamicUniqueIdsOnLoad = getDynamicUniqueInputIds(data);
         const dynamicExtraTacticsIdsOnLoad = getDynamicExtraTacticsIds(data);
         const allIds = [...allStaticIds, ...dynamicUniqueIdsOnLoad, ...dynamicExtraTacticsIdsOnLoad];
@@ -580,7 +542,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 5. その他の表示制御とイベント発火
         document.getElementById('sup3_enable')?.dispatchEvent(new Event('change'));
         document.getElementById('deathpassive_enable')?.dispatchEvent(new Event('change'));
         
@@ -597,9 +558,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const getElementAndSetText = (id, text) => {
             const element = document.getElementById(id);
             if (element) {
-                // ここで \n を <br> に変換する処理は不要（CSSのwhite-space: pre-wrap;が適用されているため）
-                // ただし、textContentにセットする前に、もしテキストエリアの内容でなければ、
-                // 強制的に改行を反映させるために、[...
                 element.textContent = text;
             }
         };
@@ -607,8 +565,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const getElementAndSetTextWithBR = (id, text) => {
             const element = document.getElementById(id);
             if (element) {
-                // textContent を使うことで、\n はそのまま改行として扱われる（CSS white-space: pre-wrap; のおかげ）
-                // HTML要素のtextContentにセットするので、[BR]置換後の\nがそのまま反映される
                 element.textContent = text;
             }
         };
@@ -757,7 +713,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function clearForm() {
-        // 静的な入力フィールドをクリア
         allStaticIds.filter(id => !controlIds.includes(id)).forEach(id => {
             const element = document.getElementById(id);
             if (element) {
@@ -765,7 +720,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 制御IDは個別に初期化
         const slashElement = document.getElementById('slash');
         if(slashElement) slashElement.value = '普通';
         const pierceElement = document.getElementById('pierce');
@@ -779,7 +733,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const t0MatchElement = document.getElementById('t0_match');
         if(t0MatchElement) t0MatchElement.value = '不可';
         const uniqueCountElement = document.getElementById('uniqueCount');
-        if(uniqueCountElement) uniqueCountElement.value = '1';
+        if(uniqueCountElement) uniqueCountElement.value = '0';
         
         const sup3Enable = document.getElementById('sup3_enable');
         if(sup3Enable) {
@@ -813,7 +767,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(extraTacticsCount) extraTacticsCount.value = '0';
         
         renderExtraTacticsForms();
-        updateUniqueForms(); // フォームをクリアした状態で再描画
+        updateUniqueForms(); 
         
         localStorage.removeItem(localStorageKey);
         updatePreview(getFormData());
@@ -821,7 +775,6 @@ document.addEventListener('DOMContentLoaded', () => {
         alert('フォームがクリアされました。');
     }
 
-    // イベントリスナーの設定
     sheetForm?.addEventListener('input', autoSaveAndPreview);
     sheetForm?.addEventListener('change', autoSaveAndPreview);
     saveBtn?.addEventListener('click', () => {
@@ -889,7 +842,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const matchStatus = data.t0_match || '可能';
                     header += ` 守備: ${guard || '—'} / 攻撃: ${attr || '—'} / 罪: ${sin || '—'}/ マッチ処理: ${matchStatus}`;
                 } else {
-                    // ダウンロード時の戦術1〜4をスラッシュ区切りに修正
                     header += ` 攻撃: ${attr || '—'} / 罪: ${sin || '—'}`;
                 }
                 text += `${header}\n`;
@@ -906,7 +858,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const attr = data[`t${i}_attr`];
                 if (name || effect) {
                     let header = `戦術${i}:${name || '名称不明'}/【${type}】`;
-                    // ダウンロード時の追加戦術をスラッシュ区切りに修正
                     header += ` 攻撃: ${attr || '—'} / 罪: ${sin || '—'}`;
                     text += `${header}\n`;
                     text += `効果:${effect || '—'}\n`;
@@ -985,7 +936,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     printBtn?.addEventListener('click', () => {
-        // フォームの内容を一時的に非表示にし、プレビューだけを表示して印刷
         sheetForm.style.display = 'none';
         const buttonsToHide = [clearBtn, saveBtn, downloadBtn, printBtn, pageTopBtn, searchButton];
         buttonsToHide.forEach(btn => {
@@ -994,7 +944,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         window.print();
         
-        // 印刷後に元に戻す
         sheetForm.style.display = 'grid';
         buttonsToHide.forEach(btn => {
             if (btn) btn.style.display = '';
@@ -1159,14 +1108,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentForms = uniqueFormsContainer.querySelectorAll('.unique-skill-form');
         const countToRender = Math.min(count, MAX_UNIQUE_SKILLS);
 
-        // 既存フォームの削除または再利用
         for (let i = currentForms.length - 1; i >= 0; i--) {
             if (i >= countToRender) {
                 currentForms[i].remove();
             }
         }
 
-        // 新しいフォームの追加
         for (let i = currentForms.length; i < countToRender; i++) {
             const newForm = createUniqueForm(i);
             uniqueFormsContainer.appendChild(newForm);
@@ -1176,7 +1123,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (hasUniqueCheckbox && countContainer) {
         hasUniqueCheckbox.addEventListener('change', (e) => {
             countContainer.style.display = e.target.checked ? 'block' : 'none';
-            updateUniqueForms(); // チェックボックスのオン/オフでフォームを更新
+            updateUniqueForms();
             autoSaveAndPreview();
         });
     }
@@ -1200,9 +1147,7 @@ document.addEventListener('DOMContentLoaded', () => {
         autoSaveAndPreview();
     });
 
-    // ====================================================================
-    // ▼ 検索機能のイベントリスナー（ここから検索機能のコード）
-    // ====================================================================
+
     if (searchButton && searchModal) {
         searchButton.addEventListener('click', () => {
             searchModal.style.display = 'block';
@@ -1220,18 +1165,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
-        // キーワード入力で検索をトリガー
+
         searchInput?.addEventListener('input', (e) => {
             performSearch(e.target.value);
         });
     }
-    // ====================================================================
-    // ▲ 検索機能のイベントリスナー（ここまで検索機能のコード）
-    // ====================================================================
-
 
     function initialize() {
-        // initializeCsvSelectorの完了を待ってから、シートの初期化を行う
+
         initializeCsvSelector().then(() => {
             const savedData = localStorage.getItem(localStorageKey);
             if (savedData) {
@@ -1254,7 +1195,6 @@ document.addEventListener('DOMContentLoaded', () => {
             updateSlotLabels();
         }).catch(error => {
             console.error("CSVデータの初期ロードに失敗しました:", error);
-            // CSVロード失敗時でもシート機能は使えるように、シート機能のみ初期化を続ける
             const savedData = localStorage.getItem(localStorageKey);
             if (savedData) {
                 try {
@@ -1275,7 +1215,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // initializeCsvSelector() の結果を待ってからシートを初期化
     initialize();
 
 });
