@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>リンバスTRPG キャラクターシートメーカー</title>
+<title>Limbus TRPG キャラクターシートメーカー</title>
 <link rel="icon" href="favicon.ico">
   <!-- OGP基本情報 -->
   <meta property="og:title" content="Limbus TRPG キャラクターシートメーカー">
@@ -13,7 +13,7 @@
 
     <!-- Twitterカード用 -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="リンバスTRPG キャラクターシートメーカー">
+  <meta name="twitter:title" content="Limbus TRPG キャラクターシートメーカー">
   <meta name="twitter:description" content="このサイトは @limbustrpg 様のTRPGシステム用の非公式キャラクターシートメーカーです。｜不具合やエラー報告などございましたら @Kagane_hoi まで連絡よろしくお願いします。">
   <meta name="twitter:image" content="https://rorocrate.github.io/Limbus-TRPG-Sheet/og-image.png">
 
@@ -24,7 +24,7 @@
 <main style="display:flex; gap:12px;">
 <section style="flex:2;">
   <header>
-    <h1>LimbusTRPG キャラクターシートメーカー</h1>
+    <h1>LimbusTRPG キャラクターシート</h1>
     <div style="display:flex;gap:8px;align-items:center">
       <button id="clearBtn" type="button" class="btn ghost">フォームをクリア</button>
       <button id="saveBtn" class="btn">ローカル保存</button>
@@ -267,17 +267,17 @@
 .tactic-block {
   display: flex;
   flex-direction: column;
-  gap: 4px; /* 項目間のスペースを統一 */
+  gap: 4px; 
   margin-bottom: 8px;
 }
 
 .tactic-block textarea {
-  height: 60px; /* 全戦術ブロックで統一 */
+  height: 60px; 
   resize: vertical;
 }
 
 .tactic-block label {
-  margin-top: 0; /* ラベル間の余白を統一 */
+  margin-top: 0; 
 }
 
 .tactic-block select,
@@ -307,7 +307,6 @@
 
 </div>
     <!-- 戦術 1〜4：攻撃属性 -->
-    <!-- テンプレ：tX_name / tX_attr / tX_sin / tX_dice / tX_effect -->
 
     <!-- 戦術 1 -->
     <div class="tactic-block">
@@ -453,7 +452,7 @@
 
 <div id="uniqueCountContainer" style="margin-top:6px; display:none;">
     <label>所持固有数</label>
-    <input id="uniqueCount" type="number" min="0" max="10"value="1" placeholder="固有スキル数">
+    <input id="uniqueCount" type="number" min="0" max="10"value="0" placeholder="固有スキル数">
 </div>
 
 <div id="uniqueFormsContainer">
@@ -565,7 +564,6 @@
     <textarea id="body_enhance" placeholder="・(身体強化名)"></textarea>
   </div>
 
-  <!-- 右は空のままでもOK（レイアウト維持のため） -->
   <div></div>
 
           <div style="margin-top:12px">
@@ -583,14 +581,14 @@
           <textarea id="owned_spirits" placeholder="・（精神名)"></textarea>
         </div>
 <style>
-/* 自由記入欄も高さを統一 */
+
 #free_note_1,
 #free_note_2 {
-  height: 120px; /* 高さを固定して見た目を揃える */
+  height: 120px; 
   resize: vertical;
   width: 100%;
   box-sizing: border-box;
-  margin-top: 4px; /* 上のラベルとの間隔を統一 */
+  margin-top: 4px;
 }
 </style>
 
@@ -748,4 +746,3 @@
 <script src="script.js"></script>
 </body>
 </html>
-
