@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
             url: './identity.tsv' 
         },
         'singularidentity': { 
-            name: '特異人格(未実装)', 
+            name: '特異人格', 
             url: './singularidentity.tsv' 
         },
         'suppassive': { 
@@ -1218,6 +1218,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initialize();
 
 });
+
 
 
 
