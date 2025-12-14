@@ -54,11 +54,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const CSV_FILE_MAP = {
         'identity': { 
-            name: '人格', 
+            name: '人格(未実装)', 
             url: './identity.tsv' 
         },
         'singularidentity': { 
-            name: '特異人格', 
+            name: '特異人格(未実装)', 
             url: './singularidentity.tsv' 
         },
         'suppassive': { 
@@ -96,16 +96,16 @@ document.addEventListener('DOMContentLoaded', () => {
             { id: 'search_sp_type', label: '通常/死亡', type: 'select', options: ['', '通常', '死亡'], csvKey: '種別' },
             { id: 'search_sp_resource', label: '資源', type: 'select', options: ['', '憤怒', '色欲','怠惰','暴食','憂鬱','傲慢','嫉妬','なし'], csvKey:'資源' },
             { id: 'search_sp_ownership', label: '保有/共鳴', type: 'select', options: ['', '保有', '共鳴','なし'], csvKey: '保有・共鳴' },
-            { id: 'search_sp_price', label: '価格範囲(通常：LP 死亡：欠片)', type: 'text', csvKey: '価格', placeholder: '0~' }
+            { id: 'search_sp_price', label: '価格範囲', type: 'text', csvKey: '価格', placeholder: '通常：LP 死亡：欠片' }
         ],
         'mental': [
             { id: 'search_mental_name', label: '名称', type: 'text', csvKey: '名称', placeholder: '萎縮...' },
-            { id: 'search_mental_price', label: '価格範囲(欠片)', type: 'text', csvKey: '価格', placeholder: '0~' }
+            { id: 'search_mental_price', label: '価格範囲', type: 'text', csvKey: '価格', placeholder: '欠片' }
         ],
         'item': [
             { id: 'search_item_name', label: '名称', type: 'text', csvKey: '名称', placeholder: 'アイテム名...' },
             { id: 'search_item_effect', label: '分類', type: 'select', options: ['', '特殊', '回復','強化'], csvKey: '分類' },
-            { id: 'search_item_price', label: '価格範囲(LP)', type: 'text', csvKey: '価格', placeholder: '0~' }
+            { id: 'search_item_price', label: '価格範囲', type: 'text', csvKey: '価格', placeholder: 'LP' }
         ],
         'status': [
             { id: 'search_status_name', label: '名称', type: 'text', csvKey: '名称', placeholder: '振動...' },
@@ -789,7 +789,8 @@ document.addEventListener('DOMContentLoaded', () => {
         text += `PC名: ${data.pcName || '—'}\n`;
         text += `PL名: ${data.plName || '—'}\n`;
         text += `人格: ${data.persona || '—'}\n`;
-        text += `LP: ${data.hp || '—'}\n`;
+        text += `\n`;
+        text += `HP: ${data.hp || '—'}\n`;
         text += `SAN値: ${data.san || '—'}\n`;
         text += `速度: ${data.speed || '—'}\n`;
         text += `斬撃耐性: ${data.slash || '—'}\n`;
@@ -818,6 +819,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 text += `SP${sup.label} 名称: ${sup.name || '名称不明'}\n`;
                 text += `発動条件: ${sup.condition || '—'}\n`;
                 text += `効果: ${sup.effect || '—'}\n`;
+                '\n';
             }
         });
         text += '\n';
@@ -846,6 +848,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 text += `${header}\n`;
                 text += `効果:${effect || '—'}\n`;
+                '\n';
             }
         }
         if (data.extraTactics_enable) {
@@ -861,6 +864,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     header += ` 攻撃: ${attr || '—'} / 罪: ${sin || '—'}`;
                     text += `${header}\n`;
                     text += `効果:${effect || '—'}\n`;
+                    '\n';
                 }
             }
         }
@@ -879,6 +883,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 text += `固有 #${i+1}: ${name || '名称不明'}\n`;
                 text += `最大数: ${max}, 種別: ${type}\n`;
                 text += `効果:\n${effect}\n\n`;
+                '\n';
             }
         }
 
@@ -899,6 +904,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        text += '\n';
         text += `【その他所持品・メモ】\n`;
         text += `アイテム: ${data.items || '—'}\n\n`;
         text += `【資源】\n`;
@@ -1218,8 +1224,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initialize();
 
 });
-
-
 
 
 
