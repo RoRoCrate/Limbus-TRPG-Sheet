@@ -818,8 +818,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (sup.name || sup.condition || sup.effect) {
                 text += `SP${sup.label} 名称: ${sup.name || '名称不明'}\n`;
                 text += `発動条件: ${sup.condition || '—'}\n`;
-                text += `効果: ${sup.effect || '—'}\n`;
-                '\n';
+                text += `効果: ${sup.effect || '—'}\n\n`;
             }
         });
         text += '\n';
@@ -847,8 +846,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     header += ` 攻撃: ${attr || '—'} / 罪: ${sin || '—'}`;
                 }
                 text += `${header}\n`;
-                text += `効果:${effect || '—'}\n`;
-                '\n';
+                ttext += `効果:${effect || '—'}\n\n`;
             }
         }
         if (data.extraTactics_enable) {
@@ -863,8 +861,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     let header = `戦術${i}:${name || '名称不明'}/【${type}】`;
                     header += ` 攻撃: ${attr || '—'} / 罪: ${sin || '—'}`;
                     text += `${header}\n`;
-                    text += `効果:${effect || '—'}\n`;
-                    '\n';
+                    text += `効果:${effect || '—'}\n\n`;
                 }
             }
         }
@@ -883,7 +880,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 text += `固有 #${i+1}: ${name || '名称不明'}\n`;
                 text += `最大数: ${max}, 種別: ${type}\n`;
                 text += `効果:\n${effect}\n\n`;
-                '\n';
             }
         }
 
