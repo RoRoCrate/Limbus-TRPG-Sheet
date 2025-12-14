@@ -182,18 +182,6 @@ button, input, textarea, select { display: none; }
 /* =======================
 検索機能（Search Modal）
 ======================= */
-/* 検索ボタン */
-#searchButton {
-    /* 既存の .btn スタイルを流用しつつ、目立たせる */
-    background: #007bff;
-    color: white;
-    font-weight: bold;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 8px;
-    cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
 
 /* モーダル背景 */
 #searchModal {
@@ -279,7 +267,8 @@ button, input, textarea, select { display: none; }
 
 .search-input-group input,
 .search-input-group select {
-    padding: 8px;
+    padding: 8px 10px; /* ★ 変更: 水平方向のパディング調整 */
+    height: 36px;     /* ★ 追加: 高さ固定でサイズ統一 */
     border-radius: 4px;
     background-color: #2b2f55;
     border: 1px solid #5560aa;
@@ -365,11 +354,11 @@ button, input, textarea, select { display: none; }
     z-index: 9998;   /* 他の要素の上に表示 */
     
     /* VISUALS (色などを指定) */
-    background: #007bff; 
-    color: white;
+    background: #f36b17; 
+    color: rgb(255, 255, 255);
     font-weight: bold;
     border: none;
-    padding: 10px 15px;
+    padding: 15px 20px;
     border-radius: 8px;
     cursor: pointer;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
@@ -407,4 +396,28 @@ button, input, textarea, select { display: none; }
 #searchInputsContainer select {
     width: 100%; /* 親要素 (search-input-group) の幅いっぱいに広げる */
     box-sizing: border-box; /* paddingやborderを幅に含める */
+}
+
+/* =======================
+検索機能 - 入力欄のコンパクト化
+======================= */
+
+/* 入力グループ全体をFlexコンテナとし、折り返しを許可 */
+#searchInputsContainer {
+    display: flex; 
+    flex-wrap: wrap; 
+    gap: 10px; /* 要素間の縦横の隙間 */
+    margin-bottom: 15px; /* 下部に少しスペースを追加 */
+}
+
+/* デスクトップで2列表示を設定 */
+.search-input-group {
+    width: calc(50% - 5px); /* 50%幅からgap(10px)の半分を引いて調整 */
+    box-sizing: border-box;
+    margin-bottom: 0; /* 垂直方向の隙間をなくす */
+}
+
+/* モーダルの全体的な最大幅を少し広げて、2列をより見やすくする (任意) */
+.search-modal-content {
+    max-width: 700px; 
 }
