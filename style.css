@@ -421,3 +421,38 @@ button, input, textarea, select { display: none; }
 .search-modal-content {
     max-width: 700px; 
 }
+
+
+/* =======================
+プレビューエリアの長文折り返し設定
+======================= */
+/* プレビュー内の長文要素（パッシブ、戦術、E.G.O、メモなど）を対象 */
+#pPassives,
+#pSupport,
+#pDeathPassive,
+#pTactics,
+#pUniqueItems,
+#pEgo,
+#pItems,
+#pOwnedPersonas,
+#pBodyEnhance,
+#pOwnedEgo,
+#pOwnedSupportPassives,
+#pOwnedSpirits,
+#pFreeNote1,
+#pFreeNote2,
+#pMindEffect {
+    /* * white-space: pre-wrap; 
+     * フォームで入力した改行（\n）を保持しつつ、長い行は自動で折り返す
+     */
+    white-space: pre-wrap; 
+    
+    /* * word-wrap: break-word; / overflow-wrap: break-word;
+     * 非常に長い単語やURLなど、通常では折り返せない箇所を強制的に折り返す
+     */
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    
+    /* 念のため、親要素の幅を超えないように指定 */
+    max-width: 100%; 
+}
